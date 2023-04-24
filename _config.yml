@@ -1,0 +1,283 @@
+# Site
+repository: Git repository where your resume will be hosted, only required if you are hosting on GitHub (eg. sproogen/modern-resume-theme)
+# favicon: Directory of your favicon (eg. images/favicon.ico)(optional)
+
+# Content configuration version
+version: 2
+
+# Personal info
+name: Michael Tänzer
+title: PhD Researcher in Artificial Intelligence for Healthcare at ICL
+email: m(dot)tanzer(at)outlook(dot)com
+# email_title: Email (Email title override)
+# phone: Your phone number (optional)
+# phone_title: Phone (Phone title override)
+# website: Your website (eg. https://google.com)(optional)
+# website_title: Web (Website title override)
+
+# Dark Mode (true/false/never)
+darkmode: false
+
+# Social links
+twitter_username: Michael__tanzer
+github_username:  Michael-Tanzer
+# stackoverflow_username: "00000001"
+# dribbble_username: jekyll
+# facebook_username: jekyll
+# flickr_username: jekyll
+# instagram_username: jekyll
+linkedin_username: michael-tanzer
+# xing_username: jekyll
+# pinterest_username: jekyll
+# youtube_username: jekyll
+orcid_username: 0000-0002-9046-1008
+googlescholar_username: mQ_CDMEAAAAJ
+
+# Additional icon links
+additional_links:
+# - title: Link name
+  # icon: Font Awesome brand icon name (eg. fab fa-twitter) (https://fontawesome.com/icons?d=gallery&s=brands&m=free)
+  # url: Link url (eg. https://google.com)
+# - title: another link
+#   icon: font awesome brand icon name (eg. fab fa-twitter) (https://fontawesome.com/icons?d=gallery&s=brands&m=free)
+#   url: Link url (eg. https://google.com)
+
+# Google Analytics and Tag Manager
+# Using more than one of these may cause issues with reporting
+# gtm: "GTM-0000000"
+# gtag: "UA-00000000-0"
+# google_analytics: "UA-00000000-0"
+
+# About Section
+# about_title: About Me (Use this to override about section title)
+about_profile_image: images/profile_square.jpg
+about_content: | # this will include new lines to allow paragraphs
+  I'm a highly motivated researcher with a PhD in Computer Science, specializing in deep learning-based image analysis. My research focuses on developing cutting-edge technologies to solve real-world problems in the fields of machine learning and medical imaging. With a strong track record of successful collaborations, I have worked on projects involving Diffusion Tensor Cardiac Magnetic Resonance (DT-CMR) and its applications in cardiac clinical diagnosis, risk stratification, prognosis, and therapy follow-up.
+
+  I'm skilled in both the theoretical and engineering aspects of machine learning and deep learning. My proficiency in writing high-quality code has enabled me to translate theoretical concepts into practical applications, making me a valuable asset to the companies I collaborate with. Overall, my diverse skillset and experience make me a strong asset in any project related to machine learning and deep learning. I'm passionate about applying my academic expertise and technical skills to real-world problems and committed to advancing the field of deep learning-based medical image analysis for the benefit of patient care.
+
+  <br>
+
+  You can find my updated CV [here](/documents/Resume Michael Tanzer.pdf)
+
+content:
+  - title: Publications # Title for the section
+    layout: list # Type of content section (list/text)
+    content:
+      - layout: top-middle
+        border: weak  # Value of `weak` will display a weak border below this item. # Any 
+                      # other value (or no value) means no border will be displayed
+        title: Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reduction
+        link: https://link.springer.com/chapter/10.1007/978-3-031-12053-4_8
+        link_text: Conference proceedings
+        additional_links:
+          - title:  ArXiV
+            icon: fas fa-archive
+            url: https://arxiv.org/abs/2206.10543
+        quote: >
+          MIUA 2022
+        description: | # this will include new lines to allow paragraphs
+          **Authors**: <u>Michael Tänzer</u>, Pedro Ferreira, Andrew Scott, Zohya Khalique, Maria Dwornik, Dudley Pennell, Guang Yang, Daniel Rueckert, Sonia Nielles-Vallespin
+
+          **Abstract**: Diffusion Tensor Cardiac Magnetic Resonance (DT-CMR) enables us to probe the microstructural arrangement of cardiomyocytes within the myocardium in vivo and non-invasively, which no other imaging modality allows. This innovative technology could revolutionise the ability to perform cardiac clinical diagnosis, risk stratification, prognosis and therapy follow-up. However, DT-CMR is currently inefficient with over six minutes needed to acquire a single 2D static image. Therefore, DT-CMR is currently confined to research but not used clinically. We propose to reduce the number of repetitions needed to produce DT-CMR datasets and subsequently de-noise them, decreasing the acquisition time by a linear factor while maintaining acceptable image quality. Our proposed approach, based on Generative Adversarial Networks, Vision Transformers, and Ensemble Learning, performs significantly and considerably better than previous proposed approaches, bringing single breath-hold DT-CMR closer to reality.
+      - layout: top-middle
+        border: weak  # Value of `weak` will display a weak border below this item. # Any 
+                      # other value (or no value) means no border will be displayed
+        title: Review of data types and model dimensionality for cardiac DTI SMS-related artefact removal
+        link: https://link.springer.com/chapter/10.1007/978-3-031-12053-4_8
+        link_text: Conference proceedings
+        additional_links:
+          - title:  ArXiV
+            icon: fas fa-archive
+            url: https://arxiv.org/abs/2209.09522
+        quote: >
+          MICCAI STACOM 2022
+        description: | # this will include new lines to allow paragraphs
+          **Authors**: <u>Michael Tänzer</u>, Sea Hee Yook, Guang Yang, Daniel Rueckert, Sonia Nielles-Vallespin
+
+          **Abstract**: As diffusion tensor imaging (DTI) gains popularity in cardiac imaging due to its unique ability to non-invasively assess the cardiac microstructure, deep learning-based Artificial Intelligence is becoming a crucial tool in mitigating some of its drawbacks, such as the long scan times. As it often happens in fast-paced research environments, a lot of emphasis has been put on showing the capability of deep learning while often not enough time has been spent investigating what input and architectural properties would benefit cardiac DTI acceleration the most. In this work, we compare the effect of several input types (magnitude images vs complex images), multiple dimensionalities (2D vs 3D operations), and multiple input types (single slice vs multi-slice) on the performance of a model trained to remove artefacts caused by a simultaneous multi-slice (SMS) acquisition. Despite our initial intuition, our experiments show that, for a fixed number of parameters, simpler 2D real-valued models outperform their more advanced 3D or complex counterparts. The best performance is although obtained by a real-valued model trained using both the magnitude and phase components of the acquired data. We believe this behaviour to be due to real-valued models making better use of the lower number of parameters, and to 3D models not being able to exploit the spatial information because of the low SMS acceleration factor used in our experiments. 
+      - layout: top-middle
+        border: null  # Value of `weak` will display a weak border below this item. # Any 
+                      # other value (or no value) means no border will be displayed
+        title: Memorisation versus Generalisation in Pre-trained Language Models
+        link: https://link.springer.com/chapter/10.1007/978-3-031-23443-9_12
+        link_text: Conference proceedings
+        additional_links:
+          - title:  ArXiV
+            icon: fas fa-archive
+            url: https://arxiv.org/abs/2105.00828
+        quote: >
+          ACL 2022
+        description: | # this will include new lines to allow paragraphs
+          **Authors**: <u>Michael Tänzer</u>, Sebastian Ruder, Marek Rei
+
+          **Abstract**: State-of-the-art pre-trained language models have been shown to memorise facts and perform well with limited amounts of training data. To gain a better understanding of how these models learn, we study their generalisation and memorisation capabilities in noisy and low-resource scenarios. We find that the training of these models is almost unaffected by label noise and that it is possible to reach near-optimal results even on extremely noisy datasets. However, our experiments also show that they mainly learn from high-frequency patterns and largely fail when tested on low-resource tasks such as few-shot learning and rare entity recognition. To mitigate such limitations, we propose an extension based on prototypical networks that improves performance in low-resource named entity recognition tasks. 
+  - title: Experience
+    layout: list
+    content:
+      - layout: top-middle
+        title: Amazon
+        sub_title: Edinburgh, Scotland
+        caption: August 2022 - December 2022
+        # link: Link to company (optional)
+        quote: >
+          Applied Research Scientist
+        description: | # this will include new lines to allow paragraphs
+            - Conducted in-depth research on the distribution shift problem in machine learning models used for customer engagement estimation in a delayed attribution setting, utilizing advanced statistical and machine learning techniques.
+            - Developed and implemented novel solutions to address the distribution shift problem, resulting in improved accuracy and performance of the models.
+            - Conducted extensive evaluations of model biases and failure modes, and effectively communicated findings with the larger team at Amazon to drive continuous improvement and innovation in machine learning modeling. 
+      - layout: top-middle
+        title: Imperial College London
+        sub_title: London, United Kingdom
+        caption: 2020 - present
+        # link: Link to company (optional)
+        quote: >
+          Graduate Teaching Assistant: Computer Vision, Machine Learning for Imaging
+        description: | # this will include new lines to allow paragraphs
+          - As a graduate teaching assistant for the "Computer Vision" and "Machine Learning for Imaging" modules, my primary responsibilities were to conduct lab sessions and mark assignments. These tasks required me to work closely with students, providing guidance and support as they worked through their assignments and projects.
+          - During lab sessions, I was responsible for overseeing students' work and helping them troubleshoot technical issues. I provided guidance on best practices for coding, debugging, and testing, as well as insights into the underlying machine learning concepts and theories. Additionally, I answered any questions students had regarding the material covered in lectures and assisted in the setup and configuration of software required for the modules.
+          - Along with conducting lab sessions, I was responsible for marking assignments and projects. This involved reviewing submissions and providing constructive feedback that would help students develop their skills in computer vision and machine learning. I was also responsible for keeping records of students' grades and providing them with timely feedback on their assignments.
+      - layout: top-middle
+        title: GoVolt Mobility
+        sub_title: Milan, Italy
+        caption: June 2019 - September 20109
+        # link: Link to company (optional)
+        quote: >
+          Android developer
+        description: | # this will include new lines to allow paragraphs
+          - Main developer of the Android application, which provided a way for the users to manage their bookings, payments and rides history.
+          - Managed a team of developers in charge of the development of the iOS application and of minor bug-fixes in both Android and iOS
+          - The application is used by more than a thousand users every day and the service is now available in multiple cities
+      - layout: top-middle
+        title: IBM
+        sub_title: Milan, Italy
+        caption: June 2018 - September 2018
+        # link: Link to company (optional)
+        quote: >
+          Internship in Analytics: Watson AI Global Business Services
+        description: | # this will include new lines to allow paragraphs
+          - Responsible of developing a costumer support chatbot that makes use of some of the latest natural language understanding and processing technologies developed by IBM
+          - I managed the high level requests of the client using the available AI technologies to deliver a cutting edge product that can answer most of the questions with pertinent answers
+          - By the end of the internship, the chatbot I developed had been introduced in four international companies and it is now used on a regular basis
+      - layout: top-middle
+        title: Autodesk
+        sub_title: Tel-Aviv, Israel
+        caption: June 2017 - August 2017
+        # link: Link to company (optional)
+        quote: >
+          Internship in the QA department - LMV BIM360
+        description: | # this will include new lines to allow paragraphs
+          - In charge of developing an automated testing suite for the web version of the 3D model viewer
+          - By the end of the internship, the test suite I developed was included in the continuous integration process
+  - title: Education
+    layout: list
+    content:
+      - layout: top-middle
+        title: Imperial College London
+        sub_title: Doctor of Philosophy - PhD 
+        caption: 2020 - 2024
+        quote: >
+          Artificial Intelligence for Healthcare
+        description: | # this will include new lines to allow paragraphs
+          PhD Title: <i>Artificial Intelligence enabled highly efficient Diffusion Tensor Cardiac Magnetic Resonance</i>
+      - layout: top-middle
+        title: Imperial College London
+        sub_title: Master of Science - MSc
+        caption: 2019 - 2020
+        quote: >
+          Computing (Artificial Intelligence and Machine Learning)
+        description: | # this will include new lines to allow paragraphs
+          Final grade: 1st (82%)
+
+          Projects:
+            - Age estimation from 3D brain MRI
+            - 2D world navigation with a deep-learning-based reinforcement learning agent (winner of "best agent award" across the cohort of over 150 students)
+            - Thesis: <i>BERT memorisation and pitfalls in low-resource scenarios</i> (keywords: NLP, model analysis, low-resource, token classification)
+
+          Following the master thesis, the project was adapted into a conference paper that was later accepted at the ACL2022 conference
+      - layout: top-middle
+        title: University of Exeter
+        sub_title: Bachelor of Science - BSc
+        caption: 2017 - 2019
+        quote: >
+          Mathematics and Computer Science
+        description: | # this will include new lines to allow paragraphs
+          Final grade: 1st (81%, top 5 in my year).
+
+          Thesis: <i>Manifold Learning for explaining the behaviour of Recurrent Neural Networks</i>  (keywords: model analysis, dimensionality reduction, pre-images problem, unsupervised clustering).
+
+          Awarded with a Dean Commendation in 2017 and 2019.
+  - title: Side projects
+    layout: list
+    content:
+      - layout: top-middle
+        title: ChatGPT-Web
+        link: https://github.com/Niek/chatgpt-web
+        link_text: GitHub
+        # additional_links:
+        #   - title:  GitHub
+        #     icon: fab fa-github
+        #     url: https://arxiv.org/abs/2206.10543
+        quote: >
+          Contributor
+        description: | # this will include new lines to allow paragraphs
+          ChatGPT-web is a simple one-page web interface to the OpenAI ChatGPT API. To use it, you need to register for an OpenAI API key first. All messages are stored in your browser's local storage, so everything is private. You can also close the browser tab and come back later to continue the conversation.  ChatGPT-web will allow more customization, and since it uses the commercial OpenAI API it should be more reliable. It's also much cheaper than ChatGPT Plus - at $20 per month, you would need to use 10 million tokens on the OpenAI API for this to break even. Finally, since ChatGPT-web is open source, so you can host it yourself and make changes as you want.
+      - layout: top-middle
+        title: The Daily Paper Reminder
+        link: https://github.com/Michael-Tanzer/daily-paper-reminder
+        link_text: GitHub (currently private)
+        # additional_links:
+        #   - title:  GitHub
+        #     icon: fab fa-github
+        #     url: https://arxiv.org/abs/2206.10543
+        quote: >
+          Main developer
+        description: | # this will include new lines to allow paragraphs
+          The Daily Paper Suggestion is a website that helps you stay on top of your reading list by suggesting a new paper to read each day. It's perfect for researchers, students, and anyone else who wants to stay up-to-date on the latest developments in their field.
+          The website is built using Python and Flask, and it uses Postgres as the database.
+
+
+# - title: Skills
+#   layout: list
+#   content: 
+#     - "Languages: Italian (native), English (full professional proficiency)"
+#     - "Programming languages: Python, PyTorch, Java, Git, Android, JavaScript, NodeJs, VueJs"
+# - title: Awards
+#   layout: list
+#   content:
+#     - Reinforcement Learning internal competition - Imperial College London
+#       Internal Reinforcement Learning competition across over 150 students 
+#       2020
+#     - Dean Commendation - University of Exeter
+#       2019
+#     - Dean Commendation - University of Exeter
+#       2017
+
+
+# Footer
+footer_show_references: false
+# references_title: References on request (Override references text)
+
+# Build settings
+# theme: modern-resume-theme (Use this is you are hosting your resume yourself)
+remote_theme: sproogen/modern-resume-theme (Use this if you are hosting your resume on GitHub)
+
+sass:
+  sass_dir: _sass
+  style: compressed
+
+plugins:
+ - jekyll-seo-tag
+
+exclude : [
+  "Gemfile",
+  "Gemfile.lock",
+  "node_modules",
+  "vendor/bundle/",
+  "vendor/cache/",
+  "vendor/gems/",
+  "vendor/ruby/",
+  "lib/",
+  "scripts/",
+  "docker-compose.yml",
+  ]
