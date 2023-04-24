@@ -1,8 +1,10 @@
 # Site
 repository: Michael-Tanzer/Michael-Tanzer.github.io  # Git repository where your resume will be hosted, only required if you are hosting on GitHub (eg. sproogen/modern-resume-theme)
 # favicon: Directory of your favicon (eg. images/favicon.ico)(optional)
-share_thumbnail: images/profile_square.jpg
-share_description: Michael Tänzer's Personal website — PhD Researcher in Artificial Intelligence for Healthcare at ICL.
+image: 
+  path: /images/profile_square.jpg
+  width: 300
+  height: 300
 
 # Content configuration version
 version: 2

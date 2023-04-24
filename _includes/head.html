@@ -9,14 +9,6 @@
   <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
   <link rel="shortcut icon" type="image/x-icon" href="{{ site.favicon | default: '/assets/favicon.ico' | relative_url }}">
 
-  {%- if site.share_thumbnail -%}
-    <meta property="og:image" content="{{ site.share_thumbnail | relative_url }}">
-  {%- endif -%}
-
-  {%- if site.share_description -%}
-  <meta property="og:description" content="{{ site.share_description }}">
-  {%- endif -%}
-
   {%- if jekyll.environment == 'production' and site.google_analytics -%}
     {%- include google-analytics.html -%}
   {%- endif -%}
