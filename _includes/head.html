@@ -10,7 +10,7 @@
   <link rel="shortcut icon" type="image/x-icon" href="{{ site.favicon | default: '/assets/favicon.ico' | relative_url }}">
 
   {%- if site.share_thumbnail -%}
-    <meta property="og:image" content="site.share_thumbnail">
+    <meta property="og:image" content="{{ site.share_thumbnail | relative_url }}">
   {%- endif -%}
 
   {%- if site.share_description -%}
