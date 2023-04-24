@@ -1,10 +1,6 @@
 # Site
 repository: Michael-Tanzer/Michael-Tanzer.github.io  # Git repository where your resume will be hosted, only required if you are hosting on GitHub (eg. sproogen/modern-resume-theme)
 # favicon: Directory of your favicon (eg. images/favicon.ico)(optional)
-image: 
-  path: /images/profile_square.jpg
-  width: 300
-  height: 300
 
 # Content configuration version
 version: 2
