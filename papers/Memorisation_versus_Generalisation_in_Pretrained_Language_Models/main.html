@@ -1,0 +1,1514 @@
+<!DOCTYPE html><html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Memorisation versus Generalisation in Pre-trained Language Models</title>
+<!--Generated on Thu Sep 28 16:40:43 2023 by LaTeXML (version 0.8.6) http://dlmf.nist.gov/LaTeXML/.-->
+<!--Document created on .-->
+
+<link rel="stylesheet" href="../ar5iv.0.7.7.min.css" type="text/css">
+<link rel="stylesheet" href="../ar5iv-site.0.2.1.css" type="text/css">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script>
+    function detectColorScheme(){
+        var theme="light";
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if(current_theme){
+            if(current_theme == "dark"){
+                theme = "dark";
+            } }
+        else if(!window.matchMedia) { return false; }
+        else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark"; }
+        if (theme=="dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+            document.documentElement.setAttribute("data-theme", "light"); } }
+
+    detectColorScheme();
+
+    function toggleColorScheme(){
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if (current_theme) {
+            if (current_theme == "light") {
+                localStorage.setItem("ar5iv_theme", "dark"); }
+            else {
+                localStorage.setItem("ar5iv_theme", "light"); } }
+        else {
+            localStorage.setItem("ar5iv_theme", "dark"); }
+        detectColorScheme(); }
+</script>
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_title_document">Memorisation versus Generalisation in Pre-trained Language Models</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Michael Tänzer
+</span><span class="ltx_author_notes">
+Imperial College London <br>
+<span class="ltx_text ltx_font_typewriter" style="font-size:90%;">m.tanzer@imperial.ac.uk</span></span></span></span>
+
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Sebastian Ruder
+</span><span class="ltx_author_notes">
+Google Research <br>
+<span class="ltx_text ltx_font_typewriter" style="font-size:90%;">ruder@google.com</span></span></span>
+
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Marek Rei
+</span><span class="ltx_author_notes">
+Imperial College London <br>
+<span class="ltx_text ltx_font_typewriter" style="font-size:90%;">marek.rei@imperial.ac.uk</span></span></span>
+</div>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+    
+<p class="ltx_p">State-of-the-art pre-trained language models have been shown to memorise facts and perform well with limited amounts of training data. To gain a better understanding of how these models learn, we study their generalisation and memorisation capabilities in noisy and low-resource scenarios. We find that the training of these models is almost unaffected by label noise and that it is possible to reach near-optimal results even on extremely noisy datasets.
+However, our experiments also show that they mainly learn from high-frequency patterns and largely fail when tested on low-resource tasks such as few-shot learning and rare entity recognition. To mitigate such limitations, we propose an extension based on prototypical networks that improves performance in low-resource named entity recognition tasks.</p>
+  
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p class="ltx_p">With recent advances in pre-trained language models <cite class="ltx_cite ltx_citemacro_cite">Peters<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib108" title="Deep contextualized word representations" class="ltx_ref">2018</a>); Devlin<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib72" title="BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding" class="ltx_ref">2019</a>); Liu<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib38" title="RoBERTa: A Robustly Optimized BERT Pretraining Approach" class="ltx_ref">2019</a>); He<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib2" title="DeBERTa: Decoding-enhanced BERT with Disentangled Attention" class="ltx_ref">2020</a>)</cite>, the field of natural language processing has seen improvements in a wide range of tasks and applications. Having acquired general-purpose knowledge from large amounts of unlabelled data, such methods have been shown to learn effectively with limited labelled data for downstream tasks <cite class="ltx_cite ltx_citemacro_cite">Howard and Ruder (<a href="#bib.bib109" title="Universal Language Model Fine-tuning for Text Classification" class="ltx_ref">2018</a>)</cite> and to generalise well to out-of-distribution examples <cite class="ltx_cite ltx_citemacro_cite">Hendrycks<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib80" title="Pretrained Transformers Improve Out-of-Distribution Robustness" class="ltx_ref">2020</a>)</cite>.
+</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p class="ltx_p">Previous work has extensively studied <em class="ltx_emph ltx_font_italic">what</em> such models learn, e.g. the types of relational or linguistic knowledge <cite class="ltx_cite ltx_citemacro_cite">Tenney<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib118" title="BERT Rediscovers the Classical NLP Pipeline" class="ltx_ref">2019</a>); Jawahar<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib119" title="What Does BERT Learn about the Structure of Language?" class="ltx_ref">2019</a>); Rogers<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib110" title="A primer in BERTology: what we know about how BERT works" class="ltx_ref">2020</a>)</cite>. However, the process of <em class="ltx_emph ltx_font_italic">how</em> these models learn from downstream data and the qualitative nature of their learning dynamics remain unclear.
+Better understanding of the learning processes in these widely-used models is needed in order to know in which scenarios they will fail and how to improve them towards more robust language representations.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p class="ltx_p">The fine-tuning process in pre-trained language models such as BERT <cite class="ltx_cite ltx_citemacro_cite">Devlin<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib72" title="BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding" class="ltx_ref">2019</a>)</cite> aims to strike a balance between generalisation and memorisation.
+For many applications it is important for the model to generalise—to learn the common patterns in the task while discarding irrelevant noise and outliers.
+However, rejecting everything that occurs infrequently is not a reliable learning strategy and in many low-resource scenarios memorisation can be crucial to performing well on a task <cite class="ltx_cite ltx_citemacro_cite"><span class="ltx_ref ltx_missing_citation ltx_ref_self">tu-etal-2020-empirical</span></cite>.
+By constructing experiments that allow for full control over these parameters, we are able to study the learning dynamics of models in conditions of high label noise or low label frequency.
+To our knowledge, this is the first qualitative study of the learning behaviour of pre-trained transformer-based language models in conditions of extreme label scarcity and label noise.</p>
+</div>
+<div id="S1.p4" class="ltx_para">
+<p class="ltx_p">We find that models such as BERT are particularly good at learning general-purpose patterns as generalisation and memorisation become separated into distinct phases during their fine-tuning.
+We also observe that the main learning phase is followed by a distinct performance plateau for several epochs before the model starts to memorise the noise.
+This makes the models more robust with regard to the number of training epochs and allows for noisy examples in the data to be identified based only on their training loss.
+</p>
+</div>
+<div id="S1.p5" class="ltx_para">
+<p class="ltx_p">However, we find that these excellent generalisation properties come at the cost of poor performance in few-shot scenarios with extreme class imbalances. Our experiments show that BERT is not able to learn from individual examples and may never predict a particular label until the number of training instances passes a critical threshold. For example, on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> <cite class="ltx_cite ltx_citemacro_cite">Sang and De Meulder (<a href="#bib.bib78" title="Introduction to the CoNLL-2003 Shared Task: Language-Independent Named Entity Recognition" class="ltx_ref">2003</a>)</cite> dataset it requires 25 instances of a class to learn to predict it at all and 100 examples to predict it with some accuracy.
+To address this limitation, we propose a method based on prototypical networks <cite class="ltx_cite ltx_citemacro_cite">Snell<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib58" title="Prototypical Networks for Few-shot Learning" class="ltx_ref">2017</a>)</cite> that augments BERT with a layer that classifies test examples by finding their closest class centroid.
+The method considerably outperforms BERT in challenging training conditions with label imbalances, such as the <span class="ltx_text ltx_font_typewriter">WNUT17</span> <cite class="ltx_cite ltx_citemacro_cite">Derczynski<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib79" title="Results of the WNUT2017 Shared Task on Novel and Emerging Entity Recognition" class="ltx_ref">2017</a>)</cite> rare entities dataset.
+</p>
+</div>
+<div id="S1.p6" class="ltx_para">
+<p class="ltx_p">Our contributions are the following: 1) We identify a second phase of learning where BERT does not overfit to noisy datasets. 2) We present experimental evidence that BERT is particularly robust to label noise and can reach near-optimal performance even with extremely strong label noise.
+3) We study forgetting in BERT and verify that it is dramatically less forgetful than some alternative methods. 4) We empirically observe that BERT completely fails to recognise minority classes when the number of examples is limited and we propose a new model, ProtoBERT, which outperforms BERT on few-shot versions of <span class="ltx_text ltx_font_typewriter">CoNLL03</span> and <span class="ltx_text ltx_font_typewriter">JNLPBA</span>, as well as on the <span class="ltx_text ltx_font_typewriter">WNUT17</span> dataset.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Previous work</h2>
+
+<div id="S2.p1" class="ltx_para">
+<p class="ltx_p">Several studies have been conducted on neural models’ ability to memorise and recall facts seen during their training. <cite class="ltx_cite ltx_citemacro_citet">Petroni<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib104" title="Language Models as Knowledge Bases?" class="ltx_ref">2019</a>)</cite> showed that pre-trained language models are surprisingly effective at recalling facts while <cite class="ltx_cite ltx_citemacro_citet">Carlini<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib54" title="The Secret Sharer: Evaluating and Testing Unintended Memorization in Neural Networks" class="ltx_ref">2019</a>)</cite> demonstrated that LSTM language models are able to consistently memorise single out-of-distribution (OOD) examples during the very first phase of training and that it is possible to retrieve such examples at test time.
+<cite class="ltx_cite ltx_citemacro_citet"><span class="ltx_ref ltx_missing_citation ltx_ref_self">liu2020early</span></cite> found that regularising early phases of training is crucial to prevent the studied CNN residual models from memorising noisy examples later on. They also propose a regularisation procedure useful in this setting. Similarly, <cite class="ltx_cite ltx_citemacro_citet"><span class="ltx_ref ltx_missing_citation ltx_ref_self">li2020gradient</span></cite> analyse how early stopping and gradient descent affect model robustness to label noise.</p>
+</div>
+<div id="S2.p2" class="ltx_para">
+<p class="ltx_p"><cite class="ltx_cite ltx_citemacro_citet">Toneva<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib25" title="An Empirical Study of Example Forgetting during Deep Neural Network Learning" class="ltx_ref">2019</a>)</cite>, on the other hand, study forgetting in visual models. They find that models consistently forget a significant portion of the training data and that this fraction of forgettable examples is mainly dependent on intrinsic properties of the training data rather than the specific model. In contrast, we show that a pretrained BERT forgets examples at a dramatically lower rate compared to a BiLSTM and a non-pretrained variant.</p>
+</div>
+<div id="S2.p3" class="ltx_para">
+<p class="ltx_p">Memorisation is closely related to generalisation: neural networks have been observed to learn simple patterns before noise <cite class="ltx_cite ltx_citemacro_cite">Arpit<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib55" title="A Closer Look at Memorization in Deep Networks" class="ltx_ref">2017</a>)</cite> and generalise despite being able to completely memorise random examples <cite class="ltx_cite ltx_citemacro_cite">Zhang<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib105" title="Understanding deep learning requires rethinking generalization" class="ltx_ref">2017</a>)</cite>. <cite class="ltx_cite ltx_citemacro_citet">Zhang<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib1" title="Understanding deep learning (still) requires rethinking generalization" class="ltx_ref">2021</a>)</cite> also show that our current understanding of statistical learning theory cannot explain the super-human generalisation performance of large neural models across many areas of study.</p>
+</div>
+<div id="S2.p4" class="ltx_para">
+<p class="ltx_p"><cite class="ltx_cite ltx_citemacro_citet">Hendrycks<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib80" title="Pretrained Transformers Improve Out-of-Distribution Robustness" class="ltx_ref">2020</a>)</cite> show that pre-trained models generalise better on out-of-distribution data and are better able to detect such data compared to non-pretrained methods but that they still do not cleanly separate in- and out-of-distribution examples.
+<cite class="ltx_cite ltx_citemacro_citet">Kumar<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib106" title="User Generated Data: Achilles’ Heel of BERT" class="ltx_ref">2020</a>)</cite> find that pre-trained methods such as BERT are sensitive to spelling noise and typos. In contrast to noise in the input, we focus on the models’ learning dynamics in the presence of label noise and find that pre-trained methods are remarkably resilient to such cases.</p>
+</div>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Experimental setting</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p class="ltx_p">We investigate the performance of pre-trained language models in specific adverse conditions. In order to evaluate generalisation abilities, we first create datasets with varying levels of label noise by randomly permuting some of the labels in the training data. This procedure allows us to pinpoint noisy examples and evaluate the performance on clean and noisy datapoints separately.
+Then, in order to investigate memorisation we train the models on datasets that contain only a small number of examples for a particular class. This allows us to evaluate how well the models are able to learn from individual datapoints as opposed to high-frequency patterns.
+We make the code for the experiments available online.<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup>
+            <span class="ltx_tag ltx_tag_note">1</span>
+            
+            
+            
+          <a href="https://github.com/Michael-Tanzer/BERT-mem-lowres" title="" class="ltx_ref ltx_url ltx_font_typewriter" style="font-size:90%;">https://github.com/Michael-Tanzer/BERT-mem-lowres</a></span></span></span></p>
+</div>
+<section id="S3.SS0.SSS0.Px1" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Datasets</h4>
+
+<div id="S3.SS0.SSS0.Px1.p1" class="ltx_para">
+<p class="ltx_p">We focus on the task of named entity recognition (NER) and employ the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> <cite class="ltx_cite ltx_citemacro_cite">Sang and De Meulder (<a href="#bib.bib78" title="Introduction to the CoNLL-2003 Shared Task: Language-Independent Named Entity Recognition" class="ltx_ref">2003</a>)</cite>, the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> <cite class="ltx_cite ltx_citemacro_cite">Collier and Kim (<a href="#bib.bib99" title="Introduction to the Bio-entity Recognition Task at JNLPBA" class="ltx_ref">2004</a>)</cite>, and the <span class="ltx_text ltx_font_typewriter">WNUT17</span> <cite class="ltx_cite ltx_citemacro_cite">Derczynski<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib79" title="Results of the WNUT2017 Shared Task on Novel and Emerging Entity Recognition" class="ltx_ref">2017</a>)</cite> datasets.
+NER is commonly used for evaluating pre-trained language models on structured prediction and its natural class imbalance is well suited for our probing experiments.
+<span class="ltx_text ltx_font_typewriter">CoNLL03</span> and <span class="ltx_text ltx_font_typewriter">JNLPBA</span> are standard datasets for NER and Bio-NER respectively. The <span class="ltx_text ltx_font_typewriter">WNUT17</span> dataset is motivated by the observation that state-of-the-art methods tend to memorise entities during training <cite class="ltx_cite ltx_citemacro_cite">Augenstein<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib88" title="Generalisation in Named Entity Recognition: A Quantitative Analysis" class="ltx_ref">2017</a>)</cite>. The dataset focuses on identifying unusual or rare entities at test time that cannot be simply memorised by the model. We evaluate based on entity-level F<math id="S3.SS0.SSS0.Px1.p1.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> unless stated otherwise.</p>
+</div>
+</section>
+<section id="S3.SS0.SSS0.Px2" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Language models</h4>
+
+<div id="S3.SS0.SSS0.Px2.p1" class="ltx_para">
+<p class="ltx_p">We use BERT-base <cite class="ltx_cite ltx_citemacro_cite">Devlin<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib72" title="BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding" class="ltx_ref">2019</a>)</cite> as the main language model for our experiments, as BERT is widely used in practice and other variations of pre-trained language models build on a similar architecture.
+The model is augmented with a classification feed-forward layer and fine-tuned using the cross-entropy loss with a learning rate of <math id="S3.SS0.SSS0.Px2.p1.m1" class="ltx_Math" alttext="10^{-4}" display="inline"><msup><mn>10</mn><mrow><mo>-</mo><mn>4</mn></mrow></msup></math>.
+AdamW <cite class="ltx_cite ltx_citemacro_cite">Loshchilov and Hutter (<a href="#bib.bib100" title="Decoupled Weight Decay Regularization" class="ltx_ref">2019</a>)</cite> is used during training with weight decay of 0.01 and a linear warm-up rate of 10%. The test results are recorded using the model that produced the highest validation metrics.
+</p>
+</div>
+<div id="S3.SS0.SSS0.Px2.p2" class="ltx_para">
+<p class="ltx_p">We compare BERT’s behaviour with that of other pre-trained transformers such as RoBERTa <cite class="ltx_cite ltx_citemacro_cite">Liu<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib38" title="RoBERTa: A Robustly Optimized BERT Pretraining Approach" class="ltx_ref">2019</a>)</cite> and DeBERTa <cite class="ltx_cite ltx_citemacro_cite">He<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib2" title="DeBERTa: Decoding-enhanced BERT with Disentangled Attention" class="ltx_ref">2020</a>)</cite> fine-tuned with the same optimiser and hyper-parameters as above.
+In order to also compare against non-transformer models, we report performance for a bi-LSTM-CRF <cite class="ltx_cite ltx_citemacro_cite">Lample<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib4" title="Neural architectures for named entity recognition" class="ltx_ref">2016</a>)</cite> model with combined character-level and word-level representations. The model is comprised of 10 layers, with 300-dimensional word representations and 50-dimensional character representations, for a total of approximately 30 million trainable parameters. In our experiments, the model is trained with the Adam optimiser <cite class="ltx_cite ltx_citemacro_cite">Kingma and Ba (<a href="#bib.bib5" title="Adam: a method for stochastic optimization" class="ltx_ref">2014</a>)</cite> and a learning rate of <math id="S3.SS0.SSS0.Px2.p2.m1" class="ltx_Math" alttext="10^{-4}" display="inline"><msup><mn>10</mn><mrow><mo>-</mo><mn>4</mn></mrow></msup></math> for 100 epochs using a CRF loss <cite class="ltx_cite ltx_citemacro_cite">Lafferty<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib120" title="Conditional Random Fields: Probabilistic Models for Segmenting and Labeling Sequence Data" class="ltx_ref">2001</a>)</cite>.</p>
+</div>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Generalisation in noisy settings</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p class="ltx_p">We first investigate how BERT learns general patterns from datasets that contain label noise. Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">1</span></span></a> shows how the model performance on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> training and validation sets changes when faced with varying levels of noise, from 0% to 50%.
+Based on the progression of performance scores, we can divide BERT’s learning process into roughly three distinct phases:</p>
+</div>
+<div id="S4.p2" class="ltx_para">
+<ol id="S4.I1" class="ltx_enumerate">
+<li id="S4.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S4.I1.i1.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">Fitting</span>: The model uses the training data to learn how to generalise, effectively learning simple patterns that can explain as much of the training data as possible <cite class="ltx_cite ltx_citemacro_cite">Arpit<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib55" title="A Closer Look at Memorization in Deep Networks" class="ltx_ref">2017</a>)</cite>. Both the training and validation performance rapidly increase as the model learns these patterns.</p>
+</div>
+</li>
+<li id="S4.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S4.I1.i2.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">Settling</span>: The increase in performance plateaus and neither the validation nor the training performance change considerably. The duration of this phase seems to be inversely proportional to the amount of noise present in the dataset.</p>
+</div>
+</li>
+<li id="S4.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S4.I1.i3.p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_font_bold">Memorisation</span>: The model rapidly starts to memorise the noisy examples, quickly improving the performance on training data while degrading the validation performance, effectively over-fitting to the noise in the dataset.</p>
+</div>
+</li>
+</ol>
+</div>
+<figure id="S4.F1" class="ltx_figure"><img src="x1.png" id="S4.F1.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="BERT performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>BERT performance (F<math id="S4.F1.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) throughout the training process on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> train and validation sets. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+<figure id="S4.F2" class="ltx_figure"><img src="x2.png" id="S4.F2.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Classification accuracy of noisy examples in the training set for the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Classification accuracy of noisy examples in the training set for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+<section id="S4.SS0.SSS0.Px1" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">A second phase of learning</h4>
+
+<div id="S4.SS0.SSS0.Px1.p1" class="ltx_para">
+<p class="ltx_p">We find BERT to exhibit a distinct second <em class="ltx_emph ltx_font_italic">settling</em> phase during which it does not over-fit. A resilience to label noise has been observed in other neural networks trained with gradient descent <cite class="ltx_cite ltx_citemacro_cite"><span class="ltx_ref ltx_missing_citation ltx_ref_self">li2020gradient</span></cite>. However, we find this phase to be much more prolonged in BERT compared to models pre-trained on other modalities such as a pre-trained ResNet fine-tuned on <span class="ltx_text ltx_font_typewriter">CIFAR10</span>, which immediately starts memorising noisy examples (see Appendix <a href="#A1" title="Appendix A Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10 ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">A</span></a> for a comparison).
+These results indicate that the precise point of early stopping is not as important when it comes to fine-tuning pre-trained language models. Similar optimal performance is retained for a substantial period, therefore training for a fixed number of epochs can be sufficient.</p>
+</div>
+<div id="S4.SS0.SSS0.Px1.p2" class="ltx_para">
+<p class="ltx_p">We illustrate BERT’s behaviour by evaluating the token-level classification accuracy of noisy examples in Figure <a href="#S4.F2" title="Figure 2 ‣ 4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">2</span></span></a>. During the second phase, BERT completely ignores the noisy tokens and correctly misclassifies them, performing “worse” than a random classifier. The step-like improvements during the third stage show that the model is unable to learn any patterns from the noise and improves by repeatedly optimising on the same examples, gradually memorising them.</p>
+</div>
+</section>
+<section id="S4.SS0.SSS0.Px2" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Robustness to noise</h4>
+
+<div id="S4.SS0.SSS0.Px2.p1" class="ltx_para">
+<p class="ltx_p">We also observe in Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">1</span></span></a> that BERT is extremely robust to noise and over-fitting in general. In the absence of noise, the model does not over-fit and maintains its development set performance, regardless of the length of training. Even with a large proportion of noise,
+model performance comparable to training on the clean dataset can be achieved by stopping the training process somewhere in the second phase.<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup>
+              <span class="ltx_tag ltx_tag_note">2</span>
+              
+              
+              
+            Adding 30% noise to the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset causes only a 0.9% decrease of validation performance in the second phase.</span></span></span></p>
+</div>
+<div id="S4.SS0.SSS0.Px2.p2" class="ltx_para">
+<p class="ltx_p">We also hypothesise that due to the robustness to noise shown in the second phase of training, a noise detector can be constructed based only on BERT’s training losses, without requiring any other information. We find that a simple detector that clusters the losses using k-means reliably achieves over 90% noise-detection F<math id="S4.SS0.SSS0.Px2.p2.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score in all our experiments, further showing how the model is able to actively detect and reject single noisy examples (see Appendix <a href="#A5" title="Appendix E BERT as a noise detector ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">E</span></a> for details about the noise detection process).</p>
+</div>
+</section>
+<section id="S4.SS0.SSS0.Px3" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Impact of pre-training</h4>
+
+<div id="S4.SS0.SSS0.Px3.p1" class="ltx_para">
+<p class="ltx_p">The above properties can mostly be attributed to BERT’s pre-training process—after large-scale optimisation as a language model, the network is primed for learning general patterns and better able to ignore individual noisy examples. We find that a randomly initialised model with the same architecture does not only achieve lower overall performance but crucially does not exhibit’s BERT’s distinct second phase of learning and robustness to noise (see Appendix <a href="#A3" title="Appendix C Effect of pre-training ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">C</span></a>).</p>
+</div>
+</section>
+<section id="S4.SS0.SSS0.Px4" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Other pre-trained transformers</h4>
+
+<div id="S4.SS0.SSS0.Px4.p1" class="ltx_para">
+<p class="ltx_p">We also analyse the behaviour of other pre-trained transformers for comparison. Specifically, studying RoBERTa and DeBERTa, we find the same training pattern that was observed in BERT—all models show a clear division into the three phases described above. These models are also all very robust to label noise during the <em class="ltx_emph ltx_font_italic">settling</em> phase of training. Notably, RoBERTa is even more resilient to label noise compared to the other two analysed models, despite DeBERTa outperforming it on public benchmarks <cite class="ltx_cite ltx_citemacro_cite">He<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib2" title="DeBERTa: Decoding-enhanced BERT with Disentangled Attention" class="ltx_ref">2020</a>)</cite>. Training and validation performance visualisations, such as those in Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">1</span></span></a>, can be found for both models in Appendix <a href="#A9" title="Appendix I Results on other pretrained transformers ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">I</span></a>.</p>
+</div>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Forgetting of learned information</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p class="ltx_p">Evaluating only the final model does not always provide the full picture regarding datapoint memorisation, as individual datapoints can be learned and forgotten multiple times during the training process.
+Following <cite class="ltx_cite ltx_citemacro_citet">Toneva<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib25" title="An Empirical Study of Example Forgetting during Deep Neural Network Learning" class="ltx_ref">2019</a>)</cite>, we record a <span class="ltx_text ltx_font_italic">forgetting event</span> for an example at epoch <math id="S5.p1.m1" class="ltx_Math" alttext="t" display="inline"><mi>t</mi></math> if the model was able to classify it correctly at epoch <math id="S5.p1.m2" class="ltx_Math" alttext="t-1" display="inline"><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow></math>, but not at epoch <math id="S5.p1.m3" class="ltx_Math" alttext="t" display="inline"><mi>t</mi></math>. Similarly, we identify a <span class="ltx_text ltx_font_italic">learning event</span> for an example at epoch <math id="S5.p1.m4" class="ltx_Math" alttext="t" display="inline"><mi>t</mi></math> if the model was not able to classify it correctly at epoch <math id="S5.p1.m5" class="ltx_Math" alttext="t-1" display="inline"><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow></math>, but it is able to do so at epoch <math id="S5.p1.m6" class="ltx_Math" alttext="t" display="inline"><mi>t</mi></math>. A <span class="ltx_text ltx_font_italic">first learning event</span> thus happens at the first epoch when a model is able to classify an example correctly. We furthermore refer to examples with zero and more than zero forgetting events as <span class="ltx_text ltx_font_italic">unforgettable</span> and <span class="ltx_text ltx_font_italic">forgettable</span> examples, respectively, while the set of <span class="ltx_text ltx_font_italic">learned</span> examples includes all examples with one or more learning events.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p class="ltx_p">In Table <a href="#S5.T1" title="Table 1 ‣ 5 Forgetting of learned information ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">1</span></span></a>, we show the number of forgettable, unforgettable, and learned examples on the training data of the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> and <span class="ltx_text ltx_font_typewriter">JNLPBA</span> datasets for BERT, a non-pre-trained BERT, and a bi-LSTM model. We also show the ratio between forgettable and learned examples, which indicates how easily a model forgets learned information. We can observe that BERT forgets less than other models and that pre-training is crucial for retaining important information. We show the most forgettable examples in Appendix <a href="#A4" title="Appendix D Examples of forgettable examples ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">D</span></a>, which tend to be atypical examples of the corresponding class.</p>
+</div>
+<figure id="S5.T1" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Dataset</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Model</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Forgettable</span><span class="ltx_text" style="font-size:80%;"> </span><math id="S5.T1.m1" class="ltx_Math" alttext="N_{f}" display="inline"><msub><mi mathsize="80%">N</mi><mi mathsize="80%">f</mi></msub></math><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Unforgettable</span><span class="ltx_text" style="font-size:80%;"> </span><math id="S5.T1.m2" class="ltx_Math" alttext="N_{u}" display="inline"><msub><mi mathsize="80%">N</mi><mi mathsize="80%">u</mi></msub></math><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Learned</span><span class="ltx_text" style="font-size:80%;"> </span><math id="S5.T1.m3" class="ltx_Math" alttext="N_{l}" display="inline"><msub><mi mathsize="80%">N</mi><mi mathsize="80%">l</mi></msub></math><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_l ltx_border_tt">
+<math id="S5.T1.m4" class="ltx_Math" alttext="N_{f}/N_{l}" display="inline"><mrow><msub><mi mathsize="80%">N</mi><mi mathsize="80%">f</mi></msub><mo mathsize="80%" stretchy="false">/</mo><msub><mi mathsize="80%">N</mi><mi mathsize="80%">l</mi></msub></mrow></math><span class="ltx_text" style="font-size:80%;"> (%)</span>
+</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t" rowspan="3"><span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CoNNL03</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">bi-LSTM</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">71.06%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">29.94%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">90.90%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">78.17%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">non-pre-trained BERT</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9.89%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">90.11%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">99.87%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9.90%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">pre-trained BERT</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">2.97%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">97.03%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">99.80%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">2.98%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_bb ltx_border_r ltx_border_t" rowspan="3"><span class="ltx_text ltx_font_typewriter" style="font-size:80%;">JNLPBA</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">bi-LSTM</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">97.16%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">5.14%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">98.33%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">98.81%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">non-pre-trained BERT</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">25.50%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">74.50%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">98.24%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">25.96%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">pre-trained BERT</span></th>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">16.62%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">83.38%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">98.18%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">16.93%</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 1: </span>Number of forgettable, unforgettable, and learned examples during BERT training on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset and <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset.</figcaption>
+</figure>
+<div id="S5.p3" class="ltx_para">
+<p class="ltx_p"><cite class="ltx_cite ltx_citemacro_citet">Toneva<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib25" title="An Empirical Study of Example Forgetting during Deep Neural Network Learning" class="ltx_ref">2019</a>)</cite> found that the number of forgetting events remains comparable across different architectures for the vision modality, given a particular dataset.<span id="footnote3" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup>
+            <span class="ltx_tag ltx_tag_note">3</span>
+            
+            
+            
+          They report proportions of forgettable examples for MNIST, PermutedMNIST, CIFAR10, and CIFAR100 as 8.3%, 24.7%, 68.7%, and 92.38% respectively.</span></span></span>
+However, our experiments show that the same does not necessarily hold for pre-trained language models. Specifically, there is a large discrepancy in the ratio between forgettable and learned examples for BERT (<span class="ltx_text" style="position:relative; bottom:0.7pt;"><math id="S5.p3.m1" class="ltx_Math" alttext="\scriptstyle\sim" display="inline"><mo mathsize="70%" stretchy="false">∼</mo></math></span>3%) and a bi-LSTM model (<span class="ltx_text" style="position:relative; bottom:0.7pt;"><math id="S5.p3.m2" class="ltx_Math" alttext="\scriptstyle\sim" display="inline"><mo mathsize="70%" stretchy="false">∼</mo></math></span>80%) on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset.</p>
+</div>
+<div id="S5.p4" class="ltx_para">
+<p class="ltx_p">We additionally analyse the distribution of first learning events throughout BERT’s training on <span class="ltx_text ltx_font_typewriter">CoNLL03</span> with label noise between 0% and 50% (Figure <a href="#S5.F3" title="Figure 3 ‣ 5 Forgetting of learned information ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">3</span></span></a>) and notice how BERT learns the majority of learned examples during the first epochs of training. As the training progresses, we see that BERT stops learning new examples entirely, regardless of the level of noise for the third and fourth epochs. Finally, in the last epochs BERT mostly memorises the noise in the data.<span id="footnote4" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">4</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">4</sup>
+            <span class="ltx_tag ltx_tag_note">4</span>
+            
+            
+            
+          We conducted additional experiments on other datasets (see Appendix <a href="#A6" title="Appendix F JNLPBA forgetting results ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">F</span></a> for results on the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset). In all cases we observe the same distribution of first learning events throughout training.</span></span></span></p>
+</div>
+<figure id="S5.F3" class="ltx_figure"><img src="x3.png" id="S5.F3.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="First learning events distribution during the training for various levels of noise on the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>First learning events distribution during the training for various levels of noise on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>BERT in low-resource scenarios</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p class="ltx_p">In the previous sections, we have observed that BERT learns examples and generalises very early in training. We will now examine if the same behaviour applies in low-resource scenarios where a minority class is only observed very few times. To this end, we remove from the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> training set all sentences containing tokens with the minority labels <span class="ltx_text ltx_font_typewriter">MISC</span> and <span class="ltx_text ltx_font_typewriter">LOC</span> except for a predetermined number of such sentences. We repeat the process for the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset with the <span class="ltx_text ltx_font_typewriter">DNA</span> and <span class="ltx_text ltx_font_typewriter">Protein</span> labels.</p>
+</div>
+<figure id="S6.F4" class="ltx_figure"><img src="x4.png" id="S6.F4.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="BERT performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>BERT performance (F<math id="S6.F4.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) throughout the training process on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset with varying number of sentences containing the <span class="ltx_text ltx_font_typewriter">LOC</span> class. Darker colours correspond to fewer examples of the <span class="ltx_text ltx_font_typewriter">LOC</span> class available (5 to 95 in steps of 20).</figcaption>
+</figure>
+<figure id="S6.F5" class="ltx_figure"><img src="x5.png" id="S6.F5.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="First learning events distribution during the training on the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 5: </span>First learning events distribution during the training on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset with varying number of sentences containing the <span class="ltx_text ltx_font_typewriter">LOC</span> class. Darker colours correspond to fewer examples of the <span class="ltx_text ltx_font_typewriter">LOC</span> class available (5 to 95 in steps of 20).</figcaption>
+</figure>
+<div id="S6.p2" class="ltx_para">
+<p class="ltx_p">We conduct similar experiments to the previous sections by
+studying how different numbers of sentences containing the target class affect BERT’s ability to learn and generalise. We report in Figure <a href="#S6.F4" title="Figure 4 ‣ 6 BERT in low-resource scenarios ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">4</span></span></a> the training and validation classification F<math id="S6.p2.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> datasets from which all but few (5 to 95) sentences containing the <span class="ltx_text ltx_font_typewriter">LOC</span> label were removed. Note that the reported performance in this experiment refers to the <span class="ltx_text ltx_font_typewriter">LOC</span> class only. In Figure <a href="#S6.F5" title="Figure 5 ‣ 6 BERT in low-resource scenarios ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">5</span></span></a> we also report the distribution of first learning events for the <span class="ltx_text ltx_font_typewriter">LOC</span> class in the same setting. Two phenomena can be observed: 1) reducing the number of sentences greatly reduces the model’s ability to generalise (validation performance decreases yet training performance remains comparable); and 2) when fewer sentences are available, they tend to be learned in earlier epochs for the first time. Corresponding experiments on the <span class="ltx_text ltx_font_typewriter">MISC</span> label can be found in Appendix <a href="#A10" title="Appendix J Few-shot MISC memorisation ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">J</span></a>.
+
+We also show the average entity-level F<math id="S6.p2.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score on tokens belonging to the minority label and the model performance for the full NER task (i.e. considering all classes) for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> and <span class="ltx_text ltx_font_typewriter">JNLPBA</span> datasets in Figures <a href="#S6.F6" title="Figure 6 ‣ 6 BERT in low-resource scenarios ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">6</span></span></a> and <a href="#S6.F7" title="Figure 7 ‣ 6 BERT in low-resource scenarios ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">7</span></span></a> respectively. For the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset, we observe that BERT needs at least 25 examples of a minority label in order to be able to start learning it. Performance rapidly improves from there and plateaus at around 100 examples. For the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset, the minimum number of examples increases to almost 50 and the plateau occurs for a higher number of examples.
+On the challenging <span class="ltx_text ltx_font_typewriter">WNUT17</span> dataset, BERT achieves only 44% entity-level F<math id="S6.p2.m3" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>. This low performance is attributable to the absence of entity overlap between training set and test set, which increases the inter-class variability of the examples.</p>
+</div>
+<figure id="S6.F6" class="ltx_figure"><img src="x6.png" id="S6.F6.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="BERT final validation entity-level F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 6: </span>BERT final validation entity-level F<math id="S6.F6.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score on the few-shot class keeping varying numbers of sentences containing examples of a selected class on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset.</figcaption>
+</figure>
+<figure id="S6.F7" class="ltx_figure"><img src="x7.png" id="S6.F7.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="BERT final validation entity-level F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 7: </span>BERT final validation entity-level F<math id="S6.F7.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score on the few-shot class keeping varying numbers of sentences containing examples of a selected class on the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset.</figcaption>
+</figure>
+</section>
+<section id="S7" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">7 </span>ProtoBERT for few-shot learning</h2>
+
+<div id="S7.p1" class="ltx_para">
+<p class="ltx_p">In order to address BERT’s limitations in few-shot learning, we propose a new model, ProtoBERT that combines BERT’s pre-trained knowledge with the few-shot capabilities of prototypical networks <cite class="ltx_cite ltx_citemacro_cite">Snell<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib58" title="Prototypical Networks for Few-shot Learning" class="ltx_ref">2017</a>)</cite> for sequence labelling problems. The method builds an embedding space where the inputs are clustered on a per-class basis, allowing us to classify a token by finding its closest centroid and assigning it the corresponding class.
+The model can be seen in Figure <a href="#S7.F8" title="Figure 8 ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">8</span></span></a>.</p>
+</div>
+<figure id="S7.F8" class="ltx_figure"><img src="x8.png" id="S7.F8.g1" class="ltx_graphics ltx_centering" width="607" height="144" alt="Schematic representation of the inference using a BERT model with a prototypical network layer.">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 8: </span>Schematic representation of the inference using a BERT model with a prototypical network layer.</figcaption>
+</figure>
+<div id="S7.p2" class="ltx_para">
+<p class="ltx_p">We first define a support set <math id="S7.p2.m1" class="ltx_Math" alttext="S" display="inline"><mi>S</mi></math>, which we use as context for the classification and designate with <math id="S7.p2.m2" class="ltx_Math" alttext="S_{k}" display="inline"><msub><mi>S</mi><mi>k</mi></msub></math> all elements of <math id="S7.p2.m3" class="ltx_Math" alttext="S" display="inline"><mi>S</mi></math> that have label <math id="S7.p2.m4" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>. We refer to the set of points that we want to classify as the query set <math id="S7.p2.m5" class="ltx_Math" alttext="Q" display="inline"><mi>Q</mi></math>, with <math id="S7.p2.m6" class="ltx_Math" alttext="l(Q_{i})" display="inline"><mrow><mi>l</mi><mo>⁢</mo><mrow><mo stretchy="false">(</mo><msub><mi>Q</mi><mi>i</mi></msub><mo stretchy="false">)</mo></mrow></mrow></math> indicating the label of the <math id="S7.p2.m7" class="ltx_Math" alttext="i^{\text{th}}" display="inline"><msup><mi>i</mi><mtext>th</mtext></msup></math> element in <math id="S7.p2.m8" class="ltx_Math" alttext="Q" display="inline"><mi>Q</mi></math>. We will also refer to <math id="S7.p2.m9" class="ltx_Math" alttext="f" display="inline"><mi>f</mi></math> as the function computed by BERT augmented with a linear layer, which produces an <math id="S7.p2.m10" class="ltx_Math" alttext="M" display="inline"><mi>M</mi></math> dimensional output.
+
+The model then classifies a given input <math id="S7.p2.m11" class="ltx_Math" alttext="\mathbf{x}" display="inline"><mi>𝐱</mi></math> as follows: for each class <math id="S7.p2.m12" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math>, we compute the centroid of the class in the learned feature space as the mean of all the elements that belong to class <math id="S7.p2.m13" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math> in the support set <math id="S7.p2.m14" class="ltx_Math" alttext="S" display="inline"><mi>S</mi></math>:</p>
+<table id="S7.E1" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S7.E1.m1" class="ltx_Math" alttext="\mathbf{c}_{k}=\frac{1}{|S_{k}|}\sum_{\mathbf{x}_{i}\in S_{k}}f(\mathbf{x}_{i})" display="block"><mrow><msub><mi>𝐜</mi><mi>k</mi></msub><mo>=</mo><mrow><mfrac><mn>1</mn><mrow><mo stretchy="false">|</mo><msub><mi>S</mi><mi>k</mi></msub><mo stretchy="false">|</mo></mrow></mfrac><mo>⁢</mo><mrow><munder><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><msub><mi>𝐱</mi><mi>i</mi></msub><mo>∈</mo><msub><mi>S</mi><mi>k</mi></msub></mrow></munder><mrow><mi>f</mi><mo>⁢</mo><mrow><mo stretchy="false">(</mo><msub><mi>𝐱</mi><mi>i</mi></msub><mo stretchy="false">)</mo></mrow></mrow></mrow></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr>
+</table>
+<p class="ltx_p">Then, we compute the distance from each input <math id="S7.p2.m15" class="ltx_Math" alttext="\mathbf{x}\in Q" display="inline"><mrow><mi>𝐱</mi><mo>∈</mo><mi>Q</mi></mrow></math> to each centroid:</p>
+<table id="S7.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S7.Ex1.m1" class="ltx_Math" alttext="dist_{k}=d(f(\mathbf{x}),\mathbf{c}_{k})" display="block"><mrow><mrow><mi>d</mi><mo>⁢</mo><mi>i</mi><mo>⁢</mo><mi>s</mi><mo>⁢</mo><msub><mi>t</mi><mi>k</mi></msub></mrow><mo>=</mo><mrow><mi>d</mi><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mrow><mi>f</mi><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mi>𝐱</mi><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><msub><mi>𝐜</mi><mi>k</mi></msub><mo stretchy="false">)</mo></mrow></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+</table>
+<p class="ltx_p">and collect them in a vector <math id="S7.p2.m16" class="ltx_Math" alttext="v\in\mathbb{R}^{k}" display="inline"><mrow><mi>v</mi><mo>∈</mo><msup><mi>ℝ</mi><mi>k</mi></msup></mrow></math>.
+Finally, we compute the probability of <math id="S7.p2.m17" class="ltx_Math" alttext="\mathbf{x}" display="inline"><mi>𝐱</mi></math> belonging to class <math id="S7.p2.m18" class="ltx_Math" alttext="k" display="inline"><mi>k</mi></math> as</p>
+<table id="A10.EGx1" class="ltx_equationgroup ltx_eqn_align ltx_eqn_table">
+
+<tbody id="S7.Ex2"><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math id="S7.Ex2.m1" class="ltx_Math" alttext="\displaystyle p(y=k\mid\mathbf{x})" display="inline"><mrow><mi>p</mi><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mrow><mi>y</mi><mo>=</mo><mrow><mi>k</mi><mo lspace="2.5pt" rspace="2.5pt">∣</mo><mi>𝐱</mi></mrow></mrow><mo stretchy="false">)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math id="S7.Ex2.m2" class="ltx_Math" alttext="\displaystyle=\frac{\exp\left(-d\left(f(\mathbf{x}),\mathbf{c}_{k}\right)%
+\right)}{\sum_{k^{\prime}}\exp\left(-d\left(f(\mathbf{x}),\mathbf{c}_{k^{%
+\prime}}\right)\right)}=" display="inline"><mrow><mi></mi><mo>=</mo><mstyle displaystyle="true"><mfrac><mrow><mi>exp</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mo>-</mo><mrow><mi>d</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><mi>f</mi><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mi>𝐱</mi><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><msub><mi>𝐜</mi><mi>k</mi></msub><mo>)</mo></mrow></mrow></mrow><mo>)</mo></mrow></mrow><mrow><msub><mo largeop="true" symmetric="true">∑</mo><msup><mi>k</mi><mo>′</mo></msup></msub><mrow><mi>exp</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mo>-</mo><mrow><mi>d</mi><mo>⁢</mo><mrow><mo>(</mo><mrow><mi>f</mi><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mi>𝐱</mi><mo stretchy="false">)</mo></mrow></mrow><mo>,</mo><msub><mi>𝐜</mi><msup><mi>k</mi><mo>′</mo></msup></msub><mo>)</mo></mrow></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mfrac></mstyle><mo>=</mo><mi></mi></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+<tbody id="S7.Ex3"><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_eqn_cell"></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math id="S7.Ex3.m1" class="ltx_Math" alttext="\displaystyle=softmax(-v)_{k}" display="inline"><mrow><mi></mi><mo>=</mo><mrow><mi>s</mi><mo>⁢</mo><mi>o</mi><mo>⁢</mo><mi>f</mi><mo>⁢</mo><mi>t</mi><mo>⁢</mo><mi>m</mi><mo>⁢</mo><mi>a</mi><mo>⁢</mo><mi>x</mi><mo>⁢</mo><msub><mrow><mo stretchy="false">(</mo><mrow><mo>-</mo><mi>v</mi></mrow><mo stretchy="false">)</mo></mrow><mi>k</mi></msub></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+</table>
+</div>
+<div id="S7.p3" class="ltx_para">
+<p class="ltx_p">The model is trained by optimising the cross-entropy loss between the above probability and the one-hot ground-truth label of <math id="S7.p3.m1" class="ltx_Math" alttext="\mathbf{x}" display="inline"><mi>𝐱</mi></math>. Crucially, <math id="S7.p3.m2" class="ltx_Math" alttext="S" display="inline"><mi>S</mi></math> and <math id="S7.p3.m3" class="ltx_Math" alttext="Q" display="inline"><mi>Q</mi></math> are not a fixed partition of the training set but change at each training step. Following <cite class="ltx_cite ltx_citemacro_citet">Snell<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib58" title="Prototypical Networks for Few-shot Learning" class="ltx_ref">2017</a>)</cite>, we use Euclidean distance as a choice for the function <math id="S7.p3.m4" class="ltx_Math" alttext="d" display="inline"><mi>d</mi></math>.</p>
+</div>
+<div id="S7.p4" class="ltx_para">
+<p class="ltx_p">In order to take into account the extreme under-representation of some classes, we create the support by sampling <math id="S7.p4.m1" class="ltx_Math" alttext="s_{1}" display="inline"><msub><mi>s</mi><mn>1</mn></msub></math> elements from each minority class and <math id="S7.p4.m2" class="ltx_Math" alttext="s_{2}" display="inline"><msub><mi>s</mi><mn>2</mn></msub></math> elements from each non-minority class. A high ratio <math id="S7.p4.m3" class="ltx_Math" alttext="s_{1}/s_{2}" display="inline"><mrow><msub><mi>s</mi><mn>1</mn></msub><mo>/</mo><msub><mi>s</mi><mn>2</mn></msub></mrow></math> gives priority to the minority classes, while a low ratio puts more emphasis on the other classes. We then similarly construct the query set with a fixed ratio <math id="S7.p4.m4" class="ltx_Math" alttext="n" display="inline"><mi>n</mi></math> between the minority classes and the non-minority classes.</p>
+</div>
+<div id="S7.p5" class="ltx_para">
+<p class="ltx_p">For NER, rather than learning a common representation for the negative class “<span class="ltx_text ltx_font_typewriter">O</span>”, we only want the model to treat it as a fallback when no other similar class can be found. For this reason, we define the vector of distances <math id="S7.p5.m1" class="ltx_Math" alttext="v" display="inline"><mi>v</mi></math> as follows:</p>
+<table id="S7.Ex4" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S7.Ex4.m1" class="ltx_Math" alttext="v=(d_{O},\ dist_{0},\ \ldots,\ dist_{k})" display="block"><mrow><mi>v</mi><mo>=</mo><mrow><mo stretchy="false">(</mo><msub><mi>d</mi><mi>O</mi></msub><mo rspace="7.5pt">,</mo><mrow><mi>d</mi><mo>⁢</mo><mi>i</mi><mo>⁢</mo><mi>s</mi><mo>⁢</mo><msub><mi>t</mi><mn>0</mn></msub></mrow><mo rspace="7.5pt">,</mo><mi mathvariant="normal">…</mi><mo rspace="7.5pt">,</mo><mrow><mi>d</mi><mo>⁢</mo><mi>i</mi><mo>⁢</mo><mi>s</mi><mo>⁢</mo><msub><mi>t</mi><mi>k</mi></msub></mrow><mo stretchy="false">)</mo></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+</table>
+<p class="ltx_p">where <math id="S7.p5.m2" class="ltx_Math" alttext="d_{O}" display="inline"><msub><mi>d</mi><mi>O</mi></msub></math> is a scalar parameter of the network that is trained along with the other parameters. Intuitively, we want to classify a point as a <span class="ltx_text ltx_font_italic">non-entity</span> (i.e. class <span class="ltx_text ltx_font_typewriter">O</span>) when it is not close enough to any centroid, where <math id="S7.p5.m3" class="ltx_Math" alttext="d_{O}" display="inline"><msub><mi>d</mi><mi>O</mi></msub></math> represents the threshold for which we consider a point “close enough”.</p>
+</div>
+<div id="S7.p6" class="ltx_para">
+<p class="ltx_p">If no example of a certain class is available in the support set during the training, we assign a distance of <math id="S7.p6.m1" class="ltx_Math" alttext="400" display="inline"><mn>400</mn></math>, making it effectively impossible to mistakenly classify the input as the missing class during that particular batch. Finally, we propose two ways to compute the class of a token at test time. The first method employs all examples from <math id="S7.p6.m2" class="ltx_Math" alttext="X" display="inline"><mi>X</mi></math> to calculate the centroids needed at test time, which produces better results but is computationally expensive for larger datasets.</p>
+</div>
+<div id="S7.p7" class="ltx_para">
+<p class="ltx_p">The second method approximates the centroid <math id="S7.p7.m1" class="ltx_Math" alttext="\mathbf{c}_{k}" display="inline"><msub><mi>𝐜</mi><mi>k</mi></msub></math> using the moving average of the centroids produced at each training step:</p>
+<table id="S7.Ex5" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S7.Ex5.m1" class="ltx_Math" alttext="\mathbf{c}_{k}^{(t)}\leftarrow\alpha\ \mathbf{c}_{k}^{(t)}\cdot(1-\alpha)\ %
+\mathbf{c}_{k}^{(t-1)}" display="block"><mrow><msubsup><mi>𝐜</mi><mi>k</mi><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></msubsup><mo>←</mo><mrow><mrow><mrow><mpadded width="+5pt"><mi>α</mi></mpadded><mo>⁢</mo><msubsup><mi>𝐜</mi><mi>k</mi><mrow><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow></msubsup></mrow><mo>⋅</mo><mrow><mo stretchy="false">(</mo><mrow><mn>1</mn><mo>-</mo><mi>α</mi></mrow><mo rspace="7.5pt" stretchy="false">)</mo></mrow></mrow><mo>⁢</mo><msubsup><mi>𝐜</mi><mi>k</mi><mrow><mo stretchy="false">(</mo><mrow><mi>t</mi><mo>-</mo><mn>1</mn></mrow><mo stretchy="false">)</mo></mrow></msubsup></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+</table>
+<p class="ltx_p">where <math id="S7.p7.m2" class="ltx_Math" alttext="\alpha" display="inline"><mi>α</mi></math> is a weighting factor. This method results in little overhead during training and only performs marginally worse than the first method.
+</p>
+</div>
+<section id="S7.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">7.1 </span>Experimental results</h3>
+
+<div id="S7.SS1.p1" class="ltx_para">
+<p class="ltx_p">We first compare ProtoBERT to the standard pre-trained BERT model with a classification layer on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> and <span class="ltx_text ltx_font_typewriter">JNLPBA</span> datasets with a smaller number of sentences belonging to the minority classes. We show the results on the few-shot classes and for the full dataset for <span class="ltx_text ltx_font_typewriter">CoNLL03</span> in Figures <a href="#S7.F9" title="Figure 9 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">9</span></span></a> and <a href="#S7.F10" title="Figure 10 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">10</span></span></a> respectively. Similarly, we show the results for the few-shot class for <span class="ltx_text ltx_font_typewriter">JNLPBA</span> in Figure <a href="#S7.F11" title="Figure 11 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">11</span></span></a>.<span id="footnote5" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">5</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">5</sup>
+              <span class="ltx_tag ltx_tag_note">5</span>
+              
+              
+              
+            A comparison on the full classification task can be found in Appendix <a href="#A8" title="Appendix H ProtoBERT results on JNLPBA ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">H</span></a>.</span></span></span> In all cases ProtoBERT consistently surpasses the performance of the baseline when training on few examples of the minority class. It particularly excels in the extreme few-shot setting, e.g. outperforming BERT by 40 F<math id="S7.SS1.p1.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> points with 15 sentences containing the <span class="ltx_text ltx_font_typewriter">LOC</span> class.
+As the number of available examples of the minority class increases, BERT starts to match ProtoBERT’s performance and outperforms it on the full dataset in some cases.</p>
+</div>
+<figure id="S7.F9" class="ltx_figure"><img src="x9.png" id="S7.F9.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Model performance comparison between the baseline model and ProtoBERT for the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 9: </span>Model performance comparison between the baseline model and ProtoBERT for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset, reducing the sentences containing the <span class="ltx_text ltx_font_typewriter">MISC</span> and <span class="ltx_text ltx_font_typewriter">LOC</span> classes. Results reported as F<math id="S7.F9.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score on the few-shot classes.</figcaption>
+</figure>
+<figure id="S7.F10" class="ltx_figure"><img src="x10.png" id="S7.F10.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Model performance comparison between the baseline model and ProtoBERT for the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 10: </span>Model performance comparison between the baseline model and ProtoBERT for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset, reducing the sentences containing the <span class="ltx_text ltx_font_typewriter">MISC</span> and <span class="ltx_text ltx_font_typewriter">LOC</span> class. Results reported as F<math id="S7.F10.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score on all classes.</figcaption>
+</figure>
+<figure id="S7.F11" class="ltx_figure"><img src="x11.png" id="S7.F11.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Model performance comparison between the baseline model and ProtoBERT for the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 11: </span>Model performance comparison between the baseline model and ProtoBERT for the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset, reducing the sentences containing the <span class="ltx_text ltx_font_typewriter">DNA</span> and <span class="ltx_text ltx_font_typewriter">Protein</span> classes. Results reported as F<math id="S7.F11.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score on the few-shot classes.</figcaption>
+</figure>
+<figure id="S7.T2" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Model</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">CoNLL03</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">JNLPBA</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">WNUT17</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">State of the art</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">93.50</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">77.59</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">50.03</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">BERT + classification layer (baseline)</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">89.35</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text ltx_font_bold" style="font-size:80%;">75.36</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">44.09</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">ProtoBERT</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">89.87</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">73.91</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">48.62</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">ProtoBERT + running centroids</span></th>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">89.46</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">73.54</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">48.56</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 2: </span>Comparison between the baseline model, the current state-of-the-art<span id="footnote7" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">7</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">7</sup><span class="ltx_note_type">footnotemark: </span>
+              <span class="ltx_tag ltx_tag_note">7</span>
+              
+              
+              
+            </span></span></span>and the proposed architecture on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span>, <span class="ltx_text ltx_font_typewriter">JNLPBA</span> and <span class="ltx_text ltx_font_typewriter">WNUT17</span> datasets evaluated using entity-level F<math id="S7.T2.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score. The state of the art is <cite class="ltx_cite ltx_citemacro_citet">Baevski<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib6" title="Cloze-driven pretraining of self-attention networks" class="ltx_ref">2019</a>)</cite>, <cite class="ltx_cite ltx_citemacro_citet">Lee<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib82" title="BioBERT: a pre-trained biomedical language representation model for biomedical text mining" class="ltx_ref">2019</a>)</cite>, and <cite class="ltx_cite ltx_citemacro_citet">Wang<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib53" title="CrossWeigh: Training Named Entity Tagger from Imperfect Annotations" class="ltx_ref">2019</a>)</cite> respectively.</figcaption>
+</figure>
+<div id="S7.SS1.p2" class="ltx_para">
+<p class="ltx_p">While the main strength of ProtoBERT is on few-shot learning, we evaluate it also on the full <span class="ltx_text ltx_font_typewriter">CoNLL03</span>, <span class="ltx_text ltx_font_typewriter">JNLPBA</span> and <span class="ltx_text ltx_font_typewriter">WNUT17</span> datasets (without removing any sentences) in Table <a href="#footnote7" title="footnote 7 ‣ Table 2 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a>. In this setting, the proposed architecture achieves results mostly similar to the baseline while considerably outperforming it on the <span class="ltx_text ltx_font_typewriter">WNUT17</span> dataset of rare entities.</p>
+</div>
+<div id="S7.SS1.p3" class="ltx_para">
+<p class="ltx_p">The results in this section show that ProtoBERT, while designed for few-shot learning, performs at least on par with its base model in all tasks. This allows the proposed model to be applied to a much wider range of tasks and datasets without negatively affecting the performance if no label imbalance is present, while bringing a substantial improvement in few-shot scenarios.</p>
+</div>
+<div id="S7.SS1.p4" class="ltx_para">
+<p class="ltx_p">We conduct an ablation study to verify the effect of our improved centroid computation method. From the results in Table <a href="#footnote7" title="footnote 7 ‣ Table 2 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a> we can affirm that, while a difference in performance does exist, it is quite modest (0.1–0.4%). On the other hand, this method reduces the training time and therefore energy consumption <cite class="ltx_cite ltx_citemacro_cite"><span class="ltx_ref ltx_missing_citation ltx_ref_self">strubell-etal-2019-energy</span></cite> to one third of the original method on <span class="ltx_text ltx_font_typewriter">CoNLL03</span> and we expect the reduction to be even greater for larger datasets.</p>
+</div>
+</section>
+</section>
+<section id="S8" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">8 </span>Conclusion</h2>
+
+<div id="S8.p1" class="ltx_para">
+<p class="ltx_p">In this study, we investigated the learning process during fine-tuning of pre-trained language models, focusing on generalisation and memorisation.
+By formulating experiments that allow for full control over the label distribution in the training data, we study the learning dynamics of the models in conditions of high label noise and low label frequency.
+The experiments show that BERT is capable of reaching near-optimal performance even when a large proportion of the training set labels has been corrupted. We find that this ability is due to the model’s tendency to separate the training into three distinct phases: fitting, settling, and memorisation, which allows the model to ignore noisy examples in the earlier epochs. The pretrained models experience a prolonged settling phase when fine-tuned, during which their performance remains optimal, indicating that the precise area of early stopping is less crucial.</p>
+</div>
+<div id="S8.p2" class="ltx_para">
+<p class="ltx_p">Furthermore, we show that the number of available examples greatly affects the learning process, influencing both when the examples are memorised and the quality of the generalisation. We show that BERT fails to learn from examples in extreme few-shot settings, completely ignoring the minority class at test time. To overcome this limitation, we augment BERT with a prototypical network. This approach partially solves the model’s limitations by enabling it to perform well in extremely low-resource scenarios and also achieves comparable performance in higher-resource settings.</p>
+</div>
+</section>
+<section id="Sx1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">Acknowledgements</h2>
+
+<div id="Sx1.p1" class="ltx_para">
+<p class="ltx_p">Michael is funded by the UKRI CDT in AI for Healthcare<span id="footnote8" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">8</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">8</sup>
+            <span class="ltx_tag ltx_tag_note">8</span>
+            
+            
+            
+          <a href="http://ai4health.io" title="" class="ltx_ref ltx_url ltx_font_typewriter" style="font-size:90%;">http://ai4health.io</a></span></span></span> (Grant No. P/S023283/1).</p>
+</div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib55" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Arpit, S. Jastrzębski, N. Ballas, D. Krueger, E. Bengio, M. S. Kanwal, T. Maharaj, A. Fischer, A. Courville, Y. Bengio, and S. Lacoste-Julien (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A Closer Look at Memorization in Deep Networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1706.05394 [cs, stat]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1706.05394</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1706.05394" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p3" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>,
+<a href="#S4.I1.i1.p1" title="item 1 ‣ 4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">item 1</span></a>.
+</span>
+</li>
+<li id="bib.bib88" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">I. Augenstein, L. Derczynski, and K. Bontcheva (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Generalisation in Named Entity Recognition: A Quantitative Analysis</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1701.02877 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1701.02877</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1701.02877" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS0.SSS0.Px1.p1" title="Datasets ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Baevski, S. Edunov, Y. Liu, L. Zettlemoyer, and M. Auli (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Cloze-driven pretraining of self-attention networks</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_place">Hong Kong, China</span>, <span class="ltx_text ltx_bib_pages"> pp. 5360–5369</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://www.aclweb.org/anthology/D19-1539" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.18653/v1/D19-1539" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S7.T2" title="Table 2 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">Table 2</span></span></a>.
+</span>
+</li>
+<li id="bib.bib54" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Carlini, C. Liu, Ú. Erlingsson, J. Kos, and D. Song (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The Secret Sharer: Evaluating and Testing Unintended Memorization in Neural Networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1802.08232 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1802.08232</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1802.08232" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+<li id="bib.bib99" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Collier and J. Kim (2004)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Introduction to the Bio-entity Recognition Task at JNLPBA</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the International Joint Workshop on Natural Language Processing in Biomedicine and its Applications (NLPBA/BioNLP)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_place">Geneva, Switzerland</span>, <span class="ltx_text ltx_bib_pages"> pp. 73–78</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://www.aclweb.org/anthology/W04-1213" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS0.SSS0.Px1.p1" title="Datasets ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Deng, W. Dong, R. Socher, L. Li, K. Li, and L. Fei-Fei (2009)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Imagenet: a large-scale hierarchical image database</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">2009 IEEE conference on computer vision and pattern recognition</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 248–255</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://ieeexplore.ieee.org/document/5206848" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p1" title="Appendix A Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10 ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib79" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">L. Derczynski, E. Nichols, M. van Erp, and N. Limsopatham (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Results of the WNUT2017 Shared Task on Novel and Emerging Entity Recognition</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the 3rd Workshop on Noisy User-generated Text</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_place">Copenhagen, Denmark</span>, <span class="ltx_text ltx_bib_pages"> pp. 140–147</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://aclweb.org/anthology/W17-4418" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.18653/v1/W17-4418" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p5" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.SS0.SSS0.Px1.p1" title="Datasets ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib72" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Devlin, M. Chang, K. Lee, and K. Toutanova (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1810.04805 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1810.04805</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1810.04805" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p3" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.SS0.SSS0.Px2.p1" title="Language models ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib96" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">K. He, X. Zhang, S. Ren, and J. Sun (2015)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Deep Residual Learning for Image Recognition</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1512.03385 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1512.03385</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1512.03385" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p1" title="Appendix A Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10 ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">P. He, X. Liu, J. Gao, and W. Chen (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">DeBERTa: Decoding-enhanced BERT with Disentangled Attention</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv–2006</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://arxiv.org/abs/2006.03654" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.SS0.SSS0.Px2.p2" title="Language models ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>,
+<a href="#S4.SS0.SSS0.Px4.p1" title="Other pre-trained transformers ‣ 4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4</span></a>.
+</span>
+</li>
+<li id="bib.bib80" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. Hendrycks, X. Liu, E. Wallace, A. Dziedzic, R. Krishnan, and D. Song (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Pretrained Transformers Improve Out-of-Distribution Robustness</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:2004.06100 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 2004.06100</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/2004.06100" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.p4" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+<li id="bib.bib109" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Howard and S. Ruder (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Universal Language Model Fine-tuning for Text Classification</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of ACL 2018</span>,
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">1801.06146</span>,
+<a href="http://arxiv.org/abs/1801.06146" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib119" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">G. Jawahar, B. Sagot, and D. Seddah (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">What Does BERT Learn about the Structure of Language?</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 3651–3657</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://aclanthology.org/P19-1356.pdf" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">D. P. Kingma and J. Ba (2014)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Adam: a method for stochastic optimization</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv–1412</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://ui.adsabs.harvard.edu/abs/2014arXiv1412.6980K/abstract" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS0.SSS0.Px2.p2" title="Language models ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib101" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Krizhevsky (2009)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Learning Multiple Layers of Features from Tiny Images</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">University of Toronto</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.222.9220&amp;rep=rep1&amp;type=pdf" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p1" title="Appendix A Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10 ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib106" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Kumar, P. Makhija, and A. Gupta (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">User Generated Data: Achilles’ Heel of BERT</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv–2003</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://ui.adsabs.harvard.edu/abs/2020arXiv200312932K/abstract" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p4" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+<li id="bib.bib120" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Lafferty, A. McCallum, and F. Pereira (2001)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Conditional Random Fields: Probabilistic Models for Segmenting and Labeling Sequence Data</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Association for Computing Machinery (ACM)</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dl.acm.org/doi/10.5555/645530.655813" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS0.SSS0.Px2.p2" title="Language models ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">G. Lample, M. Ballesteros, S. Subramanian, K. Kawakami, and C. Dyer (2016)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Neural architectures for named entity recognition</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of NAACL-HLT</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 260–270</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://m-mitchell.com/NAACL-2016/NAACL-HLT2016/pdf/N16-1030.pdf" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS0.SSS0.Px2.p2" title="Language models ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib82" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Lee, W. Yoon, S. Kim, D. Kim, S. Kim, C. H. So, and J. Kang (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">BioBERT: a pre-trained biomedical language representation model for biomedical text mining</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Bioinformatics</span>, <span class="ltx_text ltx_bib_pages"> pp. btz682</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1901.08746</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1367-4803, 1460-2059</span>,
+<a href="http://arxiv.org/abs/1901.08746" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1093/bioinformatics/btz682" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S7.T2" title="Table 2 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">Table 2</span></span></a>.
+</span>
+</li>
+<li id="bib.bib38" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Y. Liu, M. Ott, N. Goyal, J. Du, M. Joshi, D. Chen, O. Levy, M. Lewis, L. Zettlemoyer, and V. Stoyanov (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">RoBERTa: A Robustly Optimized BERT Pretraining Approach</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1907.11692 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1907.11692</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1907.11692" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.SS0.SSS0.Px2.p2" title="Language models ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib100" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">I. Loshchilov and F. Hutter (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Decoupled Weight Decay Regularization</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1711.05101 [cs, math]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1711.05101</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1711.05101" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS0.SSS0.Px2.p1" title="Language models ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib108" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. E. Peters, M. Neumann, M. Iyyer, M. Gardner, C. Clark, K. Lee, and L. Zettlemoyer (2018)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Deep contextualized word representations</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of NAACL-HLT 2018</span>,
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">- present deep contextualized word representations</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">arXiv:1802.05365v1</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib104" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">F. Petroni, T. Rocktäschel, P. Lewis, A. Bakhtin, Y. Wu, A. H. Miller, and S. Riedel (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Language Models as Knowledge Bases?</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of EMNLP 2019</span>,
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1909.01066" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p1" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+<li id="bib.bib110" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Rogers, O. Kovaleva, and A. Rumshisky (2020)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">A primer in BERTology: what we know about how BERT works</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Transactions of the Association for Computational Linguistics</span> <span class="ltx_text ltx_bib_volume">8</span>, <span class="ltx_text ltx_bib_pages"> pp. 842–866</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://www.aclweb.org/anthology/2020.tacl-1.54" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1162/tacl%5Fa%5F00349" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib78" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. F. T. K. Sang and F. De Meulder (2003)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Introduction to the CoNLL-2003 Shared Task: Language-Independent Named Entity Recognition</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:cs/0306050</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: cs/0306050</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/cs/0306050" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p5" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S3.SS0.SSS0.Px1.p1" title="Datasets ‣ 3 Experimental setting ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3</span></a>.
+</span>
+</li>
+<li id="bib.bib58" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Snell, K. Swersky, and R. S. Zemel (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Prototypical Networks for Few-shot Learning</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1703.05175 [cs, stat]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1703.05175</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1703.05175" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p5" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S7.p1" title="7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§7</span></a>,
+<a href="#S7.p3" title="7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§7</span></a>.
+</span>
+</li>
+<li id="bib.bib118" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">I. Tenney, D. Das, and E. Pavlick (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">BERT Rediscovers the Classical NLP Pipeline</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 4593–4601</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://aclanthology.org/P19-1452" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Toneva, A. Sordoni, R. Tachet des Combes, A. Trischler, Y. Bengio, and G. J. Gordon (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">An Empirical Study of Example Forgetting during Deep Neural Network Learning</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of ICLR 2019</span>,
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://arxiv.org/abs/1812.05159" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p1" title="Appendix A Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10 ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>,
+<a href="#S2.p2" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>,
+<a href="#S5.p1" title="5 Forgetting of learned information ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§5</span></a>,
+<a href="#S5.p3" title="5 Forgetting of learned information ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§5</span></a>.
+</span>
+</li>
+<li id="bib.bib53" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Z. Wang, J. Shang, L. Liu, L. Lu, J. Liu, and J. Han (2019)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">CrossWeigh: Training Named Entity Tagger from Imperfect Annotations</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1909.01441 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1909.01441</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1909.01441" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S7.T2" title="Table 2 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">Table 2</span></span></a>.
+</span>
+</li>
+<li id="bib.bib92" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Xie, R. Girshick, P. Dollár, Z. Tu, and K. He (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Aggregated Residual Transformations for Deep Neural Networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1611.05431 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1611.05431</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1611.05431" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#A1.p1" title="Appendix A Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10 ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Appendix A</span></a>.
+</span>
+</li>
+<li id="bib.bib105" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Zhang, S. Bengio, M. Hardt, B. Recht, and O. Vinyals (2017)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Understanding deep learning requires rethinking generalization</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of ICLR 2017</span>,
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dl.acm.org/doi/abs/10.1145/3446776" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p3" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Zhang, S. Bengio, M. Hardt, B. Recht, and O. Vinyals (2021)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Understanding deep learning (still) requires rethinking generalization</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Commun. ACM</span> <span class="ltx_text ltx_bib_volume">64</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. 107–115</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0001-0782</span>,
+<a href="https://doi.org/10.1145/3446776" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.1145/3446776" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.p3" title="2 Previous work ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2</span></a>.
+</span>
+</li>
+</ul>
+</section>
+<div class="ltx_pagination ltx_role_newpage"></div>
+<section id="A1" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix A </span>Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10</h2>
+
+<div id="A1.p1" class="ltx_para">
+<p class="ltx_p">For comparison, we show the training progress of a ResNet <cite class="ltx_cite ltx_citemacro_cite">He<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib96" title="Deep Residual Learning for Image Recognition" class="ltx_ref">2015</a>)</cite> trained on <span class="ltx_text ltx_font_typewriter">CIFAR10</span> <cite class="ltx_cite ltx_citemacro_cite">Krizhevsky (<a href="#bib.bib101" title="Learning Multiple Layers of Features from Tiny Images" class="ltx_ref">2009</a>)</cite> in Figure <a href="#A1.F12" title="Figure 12 ‣ Appendix A Comparison of learning phases in a BiLSTM and ResNet on CIFAR-10 ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">12</span></span></a>. Following <cite class="ltx_cite ltx_citemacro_citet">Toneva<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib25" title="An Empirical Study of Example Forgetting during Deep Neural Network Learning" class="ltx_ref">2019</a>)</cite>, we use a ResNeXt model <cite class="ltx_cite ltx_citemacro_cite">Xie<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib92" title="Aggregated Residual Transformations for Deep Neural Networks" class="ltx_ref">2017</a>)</cite> with 101 blocks pre-trained on the ImageNet dataset <cite class="ltx_cite ltx_citemacro_cite">Deng<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="#bib.bib3" title="Imagenet: a large-scale hierarchical image database" class="ltx_ref">2009</a>)</cite>. The model has been fine-tuned with a cross-entropy loss with the same optimiser and hyper-parameters as BERT. We evaluate it using F<math id="A1.p1.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score. As can be seen, the training performance continues to increase while the validation performs plateaus or decreases, with no clearly delineated second phase as in the pre-trained BERT’s training.</p>
+</div>
+<figure id="A1.F12" class="ltx_figure"><img src="x12.png" id="A1.F12.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 12: </span>Performance (F<math id="A1.F12.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) of a ResNet model throughout the training process on the <span class="ltx_text ltx_font_typewriter">CIFAR10</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+</section>
+<section id="A2" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix B </span>JNLPBA noise results</h2>
+
+<div id="A2.p1" class="ltx_para">
+<p class="ltx_p">As well as <span class="ltx_text ltx_font_typewriter">CoNLL03</span>, we also report the analysis on the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset. In Figure <a href="#A2.F13" title="Figure 13 ‣ Appendix B JNLPBA noise results ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">13</span></span></a>, we show the performance of BERT on increasingly noisy versions of the training set. In Figure <a href="#A2.F14" title="Figure 14 ‣ Appendix B JNLPBA noise results ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">14</span></span></a>, we report the accuracy of noisy examples.</p>
+</div>
+<figure id="A2.F13" class="ltx_figure"><img src="x13.png" id="A2.F13.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="BERT performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 13: </span>BERT performance (F<math id="A2.F13.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) throughout the training process on the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+<figure id="A2.F14" class="ltx_figure"><img src="x14.png" id="A2.F14.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Classification accuracy of noisy examples in the training set for the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 14: </span>Classification accuracy of noisy examples in the training set for the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+</section>
+<section id="A3" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix C </span>Effect of pre-training</h2>
+
+<div id="A3.p1" class="ltx_para">
+<p class="ltx_p">BERT’s second phase of pre-training and noise resilience are mainly attributable to its pre-training. We show the training progress of a non-pretrained BERT model on <span class="ltx_text ltx_font_typewriter">CoNLL03</span> in Figure <a href="#A3.F15" title="Figure 15 ‣ Appendix C Effect of pre-training ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">15</span></span></a> and its classification accuracy on noisy examples in Figure <a href="#A3.F16" title="Figure 16 ‣ Appendix C Effect of pre-training ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">16</span></span></a>. As can be seen, a non-pre-trained BERT’s training performance continuously improves and so does its performance on noisy examples.</p>
+</div>
+<figure id="A3.F15" class="ltx_figure"><img src="x15.png" id="A3.F15.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 15: </span>Performance (F<math id="A3.F15.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) of a non-pre-trained BERT model throughout the training process on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> train and validation sets. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+<figure id="A3.F16" class="ltx_figure"><img src="x16.png" id="A3.F16.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Classification accuracy of a non-pre-trained BERT model on noisy examples in the training set for the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 16: </span>Classification accuracy of a non-pre-trained BERT model on noisy examples in the training set for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+</section>
+<section id="A4" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix D </span>Examples of forgettable examples</h2>
+
+<div id="A4.p1" class="ltx_para">
+<p class="ltx_p">In Table <a href="#A4.T3" title="Table 3 ‣ Appendix D Examples of forgettable examples ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">3</span></span></a>, we can find the sentences containing the most forgettable examples during a training run of 50 epochs for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset. The maximum theoretical number of forgetting events in this case is 25. It is important to notice how the most forgotten entity presents a mismatched "The", which the network correctly classifies as an "other" (<span class="ltx_text ltx_font_typewriter">O</span>) entity.
+</p>
+</div>
+<figure id="A4.T3" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Sentence</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Number of forgetting events</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_t">
+<span class="ltx_text" style="font-size:80%;">the third and final test between England and Pakistan at </span><span class="ltx_text ltx_font_bold" style="font-size:80%;">The</span><span class="ltx_text" style="font-size:80%;"> (I-LOC)</span>
+</td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">11</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">GOLF</span><span class="ltx_text" style="font-size:80%;"> - BRITISH MASTERS THIRD ROUND SCORES . (O)</span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">10</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">GOLF</span><span class="ltx_text" style="font-size:80%;"> - GERMAN OPEN FIRST ROUND SCORES . (O)</span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">10</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">English County Championship</span><span class="ltx_text" style="font-size:80%;"> cricket matches on Saturday : (MISC)</span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">10</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_bb ltx_border_r">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">English County Championship</span><span class="ltx_text" style="font-size:80%;"> cricket matches on Friday : (MISC)</span>
+</td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">9</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 3: </span>Sentences containing the most forgettable examples in the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset. In bold the entity that was most often forgotten within the given sentence and in brackets its ground-truth classification.</figcaption>
+</figure>
+</section>
+<section id="A5" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix E </span>BERT as a noise detector</h2>
+
+<div id="A5.p1" class="ltx_para">
+<p class="ltx_p">We report the exact detection metrics for the model proposed in section <a href="#S4" title="4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a> in Table <a href="#A5.T4" title="Table 4 ‣ Appendix E BERT as a noise detector ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">4</span></span></a>. Here we can see how both for extremely noisy datasets and for cleaner datasets, our model is able to detect the noisy examples with about 90-91% F<math id="A5.p1.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score, as mentioned above.</p>
+</div>
+<figure id="A5.T4" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Noise</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Precision</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Recall</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">F<math id="A5.T4.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn mathvariant="normal">1</mn></msub></math> score</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">10%</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">92.18%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">95.90%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">94.00%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">20%</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">96.19%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">96.33%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">96.26%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">30%</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">98.02%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">96.35%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">97.17%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">40%</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">98.27%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">96.95%</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">97.60%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">50%</span></th>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">98.64%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">97.27%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">97.94%</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 4: </span>Noise detection performance with varying levels of noise on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset using the method proposed.</figcaption>
+</figure>
+<div id="A5.p2" class="ltx_para">
+<p class="ltx_p">Moreover, we provide the implementation used to detect outliers used to produce the table and figures above:</p>
+<ol id="A5.I1" class="ltx_enumerate">
+<li id="A5.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="A5.I1.i1.p1" class="ltx_para">
+<p class="ltx_p">We first collect the losses for each training example after a short fine-tuning process (4 epochs in our case).</p>
+</div>
+</li>
+<li id="A5.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="A5.I1.i2.p1" class="ltx_para">
+<p class="ltx_p">We then assume an unknown portion of these examples is noisy, giving rise to a two-class classification problem (noisy vs non-noisy). To discriminate the two classes, we then solve the following optimisation problem which aims to find a loss threshold <math id="A5.I1.i2.p1.m1" class="ltx_Math" alttext="T" display="inline"><mi>T</mi></math> that minimises inter-class variance for each of the two classes:</p>
+<table id="A5.Ex6" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="A5.Ex6.m1" class="ltx_Math" alttext="\underset{T}{\arg\min}\sum_{x\ &lt;\ T}\left\|x-\mu_{c}\right\|^{2}+\sum_{x\ \geq%
+\ T}\left\|x-\mu_{n}\right\|^{2}" display="block"><mrow><mrow><munder accentunder="true"><mrow><mi>arg</mi><mo>⁡</mo><mi>min</mi></mrow><mo>𝑇</mo></munder><mo>⁢</mo><mrow><munder><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><mpadded width="+5pt"><mi>x</mi></mpadded><mo rspace="7.5pt">&lt;</mo><mi>T</mi></mrow></munder><msup><mrow><mo>∥</mo><mrow><mi>x</mi><mo>-</mo><msub><mi>μ</mi><mi>c</mi></msub></mrow><mo>∥</mo></mrow><mn>2</mn></msup></mrow></mrow><mo>+</mo><mrow><munder><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><mpadded width="+5pt"><mi>x</mi></mpadded><mo rspace="7.5pt">≥</mo><mi>T</mi></mrow></munder><msup><mrow><mo>∥</mo><mrow><mi>x</mi><mo>-</mo><msub><mi>μ</mi><mi>n</mi></msub></mrow><mo>∥</mo></mrow><mn>2</mn></msup></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+</table>
+<p class="ltx_p">Where elements denoted as <math id="A5.I1.i2.p1.m2" class="ltx_Math" alttext="x" display="inline"><mi>x</mi></math> are the losses extracted from the training set, <math id="A5.I1.i2.p1.m3" class="ltx_Math" alttext="\mu_{c}" display="inline"><msub><mi>μ</mi><mi>c</mi></msub></math> is the mean of all <math id="A5.I1.i2.p1.m4" class="ltx_Math" alttext="x&lt;T" display="inline"><mrow><mi>x</mi><mo>&lt;</mo><mi>T</mi></mrow></math>, and <math id="A5.I1.i2.p1.m5" class="ltx_Math" alttext="\mu_{n}" display="inline"><msub><mi>μ</mi><mi>n</mi></msub></math> is the mean of all <math id="A5.I1.i2.p1.m6" class="ltx_Math" alttext="x\geq T" display="inline"><mrow><mi>x</mi><mo>≥</mo><mi>T</mi></mrow></math>.</p>
+</div>
+</li>
+<li id="A5.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="A5.I1.i3.p1" class="ltx_para">
+<p class="ltx_p">For testing purposes, we then apply the method to the chosen training set and measure the noise detection F1 score.</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="A5.p3" class="ltx_para">
+<p class="ltx_p">In Figure <a href="#A5.F17" title="Figure 17 ‣ Appendix E BERT as a noise detector ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">17</span></a>, we qualitatively saw how the losses are distributed for noisy and regular examples and notice how they are neatly separated except for a small subset of the noisy examples. These examples might have been already memorised by the model, which would explain their lower loss.
+</p>
+</div>
+<figure id="A5.F17" class="ltx_figure"><img src="x17.png" id="A5.F17.g1" class="ltx_graphics ltx_centering" width="677" height="529" alt="Loss distribution for noisy and non-noisy examples from the ">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 17: </span>Loss distribution for noisy and non-noisy examples from the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> training set. The grey dashed line represent the chosen loss threshold found by our method to discriminate between noisy and non-noisy examples.</figcaption>
+</figure>
+</section>
+<section id="A6" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix F </span>JNLPBA forgetting results</h2>
+
+<div id="A6.p1" class="ltx_para">
+<p class="ltx_p">We show in Figure <a href="#A6.F18" title="Figure 18 ‣ Appendix F JNLPBA forgetting results ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">18</span></span></a> how many data points were learned by BERT for the first time at each epoch on the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset during training (first learning events).</p>
+</div>
+<figure id="A6.F18" class="ltx_figure"><img src="x18.png" id="A6.F18.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="First learning events distribution during BERT training for various levels of noise on the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 18: </span>First learning events distribution during BERT training for various levels of noise on the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+</section>
+<section id="A7" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix G </span>Further ProtoBERT results</h2>
+
+<div id="A7.p1" class="ltx_para">
+<p class="ltx_p">As in Table <a href="#footnote7" title="footnote 7 ‣ Table 2 ‣ 7.1 Experimental results ‣ 7 ProtoBERT for few-shot learning ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">7</span></a> we only reported F<math id="A7.p1.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score for our methods, for completeness we also report precision and recall in table <a href="#A7.T5" title="Table 5 ‣ Appendix G Further ProtoBERT results ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">5</span></span></a>.</p>
+</div>
+<figure id="A7.T5" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Model</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_tt" colspan="3">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">CoNLL03</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_tt" colspan="3">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">JNLPBA</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" colspan="3">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">WNUT17</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;"></span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">P</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_t">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">R</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">F<math id="A7.T5.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn mathvariant="normal">1</mn></msub></math></span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">P</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_t">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">R</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_t">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">F<math id="A7.T5.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn mathvariant="normal">1</mn></msub></math></span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">P</span></th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_t">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">R</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_t">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">F<math id="A7.T5.m3" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn mathvariant="normal">1</mn></msub></math></span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">State-of-the-art</span></th>
+<td class="ltx_td ltx_align_center ltx_border_t"><span class="ltx_text" style="font-size:80%;">NA</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">NA</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">93.50</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t"><span class="ltx_text" style="font-size:80%;">NA</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">NA</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">77.59</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t"><span class="ltx_text" style="font-size:80%;">NA</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">NA</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">50.03</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">BERT + classification layer (baseline)</span></th>
+<td class="ltx_td ltx_align_center"><span class="ltx_text" style="font-size:80%;">88.97</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">89.75</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">89.35</span></td>
+<td class="ltx_td ltx_align_center"><span class="ltx_text ltx_font_bold" style="font-size:80%;">72.99</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">77.90</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text ltx_font_bold" style="font-size:80%;">75.36</span></td>
+<td class="ltx_td ltx_align_center"><span class="ltx_text" style="font-size:80%;">53.65</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">37.42</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">44.09</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">ProtoBERT</span></th>
+<td class="ltx_td ltx_align_center ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">89.26</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">90.49</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">89.87</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t"><span class="ltx_text" style="font-size:80%;">68.66</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">80.03</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">73.91</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">54.38</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">43.96</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_font_bold" style="font-size:80%;">48.62</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">ProtoBERT + running centroids</span></th>
+<td class="ltx_td ltx_align_center ltx_border_bb"><span class="ltx_text" style="font-size:80%;">89.03</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">89.91</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">89.46</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb"><span class="ltx_text" style="font-size:80%;">68.92</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">78.83</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">73.54</span></td>
+<td class="ltx_td ltx_align_center ltx_border_bb"><span class="ltx_text" style="font-size:80%;">54.11</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text ltx_font_bold" style="font-size:80%;">44.05</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">48.56</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 5: </span>Comparison between the baseline model and the proposed architecture on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span>, <span class="ltx_text ltx_font_typewriter">JNLPBA</span> and <span class="ltx_text ltx_font_typewriter">WNUT17</span> datasets evaluated using entity-level metrics.</figcaption>
+</figure>
+<figure id="A7.T6" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Noise</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Forgettable</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Unforgettable</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Learned</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_l ltx_border_tt">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">Forgettable/learned (%)</span><span class="ltx_text" style="font-size:80%;"></span>
+</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CoNLL03</span><span class="ltx_text" style="font-size:80%;"> 0%</span>
+</th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">2,669</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">699,381</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">230,716</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">1.1568%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CoNLL03</span><span class="ltx_text" style="font-size:80%;"> 10%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">10,352</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">691,698</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">224,968</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.6015%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CoNLL03</span><span class="ltx_text" style="font-size:80%;"> 20%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">19,667</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">682,383</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">216,780</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9.0723%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CoNLL03</span><span class="ltx_text" style="font-size:80%;"> 30%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">30,041</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">672,009</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">209,191</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.3606%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">JNLPBA</span><span class="ltx_text" style="font-size:80%;"> 0%</span>
+</th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">23,263</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">817,087</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">457,485</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">5.0849%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">JNLPBA</span><span class="ltx_text" style="font-size:80%;"> 10%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">26,667</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">813,683</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">422,264</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">6.3152%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">JNLPBA</span><span class="ltx_text" style="font-size:80%;"> 20%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">26,369</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">813,981</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">386,562</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">6.8214%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">JNLPBA</span><span class="ltx_text" style="font-size:80%;"> 30%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">30,183</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">810,167</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">353,058</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">8.5490%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CIFAR10</span><span class="ltx_text" style="font-size:80%;"> 0%</span>
+</th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">8,328</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">36,672</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">45,000</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">18.5067%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CIFAR10</span><span class="ltx_text" style="font-size:80%;"> 10%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9,566</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">35,434</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">44,976</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">21.2691%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CIFAR10</span><span class="ltx_text" style="font-size:80%;"> 20%</span>
+</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9,663</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">35,337</span></td>
+<td class="ltx_td ltx_align_right ltx_border_r"><span class="ltx_text" style="font-size:80%;">44,922</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">21.5106%</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_bb ltx_border_r">
+<span class="ltx_text ltx_font_typewriter" style="font-size:80%;">CIFAR10</span><span class="ltx_text" style="font-size:80%;"> 30%</span>
+</th>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">11,207</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">33,793</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb ltx_border_r"><span class="ltx_text" style="font-size:80%;">44,922</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb"><span class="ltx_text" style="font-size:80%;">24.9477%</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 6: </span>Number of forgettable, unforgettable, and learned examples during BERT training on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span>, <span class="ltx_text ltx_font_typewriter">JNLPBA</span> and <span class="ltx_text ltx_font_typewriter">CIFAR10</span> datasets.</figcaption>
+</figure>
+<figure id="A7.T7" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Examples</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">BERT</span></th>
+<th class="ltx_td ltx_align_right ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">bi-LSTM</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">Forgettable</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">2,669</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">144,377</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">Unforgettable</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">699,381</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">60,190</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">Learned</span></th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">230,716</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">184,716</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_right ltx_th ltx_th_row ltx_border_bb ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">Forgettable/learned (%)</span></th>
+<td class="ltx_td ltx_align_right ltx_border_bb ltx_border_t"><span class="ltx_text" style="font-size:80%;">1.1568%</span></td>
+<td class="ltx_td ltx_align_right ltx_border_bb ltx_border_t"><span class="ltx_text" style="font-size:80%;">78,1616%</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 7: </span>Comparison of the number of forgettable, learnable and unforgettable examples between BERT and a bi-LSTM model.</figcaption>
+</figure>
+</section>
+<section id="A8" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix H </span>ProtoBERT results on JNLPBA</h2>
+
+<div id="A8.p1" class="ltx_para">
+<p class="ltx_p">We report in Figure <a href="#A8.F19" title="Figure 19 ‣ Appendix H ProtoBERT results on JNLPBA ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">19</span></span></a> the comparison between our baseline and ProtoBERT for all classes.</p>
+</div>
+<figure id="A8.F19" class="ltx_figure"><img src="x19.png" id="A8.F19.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="Model performance comparison between the baseline model and ProtoBERT for the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 19: </span>Model performance comparison between the baseline model and ProtoBERT for the <span class="ltx_text ltx_font_typewriter">JNLPBA</span> dataset, reducing the sentences containing the <span class="ltx_text ltx_font_typewriter">DNA</span> and <span class="ltx_text ltx_font_typewriter">Protein</span> class. Results reported as F<math id="A8.F19.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score on all classes.</figcaption>
+</figure>
+</section>
+<section id="A9" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix I </span>Results on other pretrained transformers</h2>
+
+<div id="A9.p1" class="ltx_para">
+<p class="ltx_p">While most of the main paper focuses on BERT, it is worthwhile to mention the results on other pre-trained transformers and compare the results.</p>
+</div>
+<div id="A9.p2" class="ltx_para">
+<p class="ltx_p">In Figures <a href="#A9.F20" title="Figure 20 ‣ Appendix I Results on other pretrained transformers ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">20</span></span></a> and <a href="#A9.F21" title="Figure 21 ‣ Appendix I Results on other pretrained transformers ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">21</span></span></a>, we show the validation performances (classification F<math id="A9.p2.m1" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math> score) for the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> datasets for the RoBERTa and DeBERTa models (similarly to Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Generalisation in noisy settings ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">1</span></span></a>). We notice that the three phases of training reported above are apparent in all studied models. RoBERTa, in particular, displays the same pattern, but shows higher robustness to noise compared to the other two models.</p>
+</div>
+<div id="A9.p3" class="ltx_para">
+<p class="ltx_p">Moreover, in Figures <a href="#A9.F22" title="Figure 22 ‣ Appendix I Results on other pretrained transformers ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">22</span></span></a> and <a href="#A9.F23" title="Figure 23 ‣ Appendix I Results on other pretrained transformers ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">23</span></span></a>, we report the distribution of first learning events (similarly to Figure <a href="#S6.F5" title="Figure 5 ‣ 6 BERT in low-resource scenarios ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">5</span></span></a>) on RoBERTa and DeBERTa. As above, we can observe the same pattern described in the main body of the paper, with the notable exception that RoBERTa is again more robust to learning the noise in later phases of the training.</p>
+</div>
+<figure id="A9.F20" class="ltx_figure"><img src="x20.png" id="A9.F20.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="RoBERTa performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 20: </span>RoBERTa performance (F<math id="A9.F20.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) throughout the training process on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> train and validation sets. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+<figure id="A9.F21" class="ltx_figure"><img src="x21.png" id="A9.F21.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="DeBERTa performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 21: </span>DeBERTa performance (F<math id="A9.F21.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) throughout the training process on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> train and validation sets. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+<figure id="A9.F22" class="ltx_figure"><img src="x22.png" id="A9.F22.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="First learning events distribution during RoBERTa training for various levels of noise on the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 22: </span>First learning events distribution during RoBERTa training for various levels of noise on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+<figure id="A9.F23" class="ltx_figure"><img src="x23.png" id="A9.F23.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="First learning events distribution during DeBERTa training for various levels of noise on the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 23: </span>First learning events distribution during DeBERTa training for various levels of noise on the <span class="ltx_text ltx_font_typewriter">CoNLL03</span> dataset. Darker colours correspond to higher levels of noise (0% to 50%).</figcaption>
+</figure>
+</section>
+<section id="A10" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix J </span>Few-shot <span class="ltx_text ltx_font_typewriter">MISC</span> memorisation</h2>
+
+<div id="A10.p1" class="ltx_para">
+<p class="ltx_p">As per section <a href="#S6" title="6 BERT in low-resource scenarios ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6</span></a>, we also report the result of the experiments in the few-shot setting by removing most sentences containing the <span class="ltx_text ltx_font_typewriter">MISC</span> class. The experimental setting is identical to the described in the main body of the paper. The relevant Figures are <a href="#A10.F24" title="Figure 24 ‣ Appendix J Few-shot MISC memorisation ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">24</span></span></a> and <a href="#A10.F25" title="Figure 25 ‣ Appendix J Few-shot MISC memorisation ‣ Memorisation versus Generalisation in Pre-trained Language Models" class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">25</span></span></a>.</p>
+</div>
+<figure id="A10.F24" class="ltx_figure"><img src="x24.png" id="A10.F24.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="BERT performance (F">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 24: </span>BERT performance (F<math id="A10.F24.m2" class="ltx_Math" alttext="{}_{1}" display="inline"><msub><mi></mi><mn>1</mn></msub></math>) throughout the training process on the <span class="ltx_text ltx_font_typewriter">CoNLL03-XMISC</span> train and validation sets. Darker colours correspond to fewer examples of the <span class="ltx_text ltx_font_typewriter">MISC</span> class available (5 to 95 in steps of 20).</figcaption>
+</figure>
+<figure id="A10.F25" class="ltx_figure"><img src="x25.png" id="A10.F25.g1" class="ltx_graphics ltx_centering" width="642" height="482" alt="First learning events distribution during the training for various levels of noise on the ">
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_figure">Figure 25: </span>First learning events distribution during the training for various levels of noise on the <span class="ltx_text ltx_font_typewriter">CoNLL03-XMISC</span> dataset. Darker colours correspond to fewer examples of the <span class="ltx_text ltx_font_typewriter">MISC</span> class available (5 to 95 in steps of 20).</figcaption>
+</figure>
+</section>
+</article>
+</div>
+<footer class="ltx_page_footer">
+<div class="ltx_page_logo">Generated  on Thu Sep 28 16:40:43 2023 by <a href="http://dlmf.nist.gov/LaTeXML/">LaTeXML <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="[LOGO]"></a>
+</div></footer>
+</div>
+</body>
+</html>

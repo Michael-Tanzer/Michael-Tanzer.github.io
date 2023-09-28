@@ -10,33 +10,33 @@
 <meta name="keywords" lang="en" content="Quantitative MRI Deep learning MRI reconstruction">
 
 <script>
-        function detectColorScheme(){
-                var theme="light";
-                var current_theme = localStorage.getItem("ar5iv_theme");
-                if(current_theme){
-                        if(current_theme == "dark"){
-                                theme = "dark";
-                        } }
-                else if(!window.matchMedia) { return false; }
-                else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                        theme = "dark"; }
-                if (theme=="dark") {
-                        document.documentElement.setAttribute("data-theme", "dark");
-                } else {
-                        document.documentElement.setAttribute("data-theme", "light"); } }
+    function detectColorScheme(){
+        var theme="light";
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if(current_theme){
+            if(current_theme == "dark"){
+                theme = "dark";
+            } }
+        else if(!window.matchMedia) { return false; }
+        else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark"; }
+        if (theme=="dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+            document.documentElement.setAttribute("data-theme", "light"); } }
 
-        detectColorScheme();
+    detectColorScheme();
 
-        function toggleColorScheme(){
-                var current_theme = localStorage.getItem("ar5iv_theme");
-                if (current_theme) {
-                        if (current_theme == "light") {
-                                localStorage.setItem("ar5iv_theme", "dark"); }
-                        else {
-                                localStorage.setItem("ar5iv_theme", "light"); } }
-                else {
-                        localStorage.setItem("ar5iv_theme", "dark"); }
-                detectColorScheme(); }
+    function toggleColorScheme(){
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if (current_theme) {
+            if (current_theme == "light") {
+                localStorage.setItem("ar5iv_theme", "dark"); }
+            else {
+                localStorage.setItem("ar5iv_theme", "light"); } }
+        else {
+            localStorage.setItem("ar5iv_theme", "dark"); }
+        detectColorScheme(); }
 </script>
 
 </head>
@@ -83,9 +83,9 @@ Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK</span><
 
 <div class="ltx_abstract">
 <h6 class="ltx_title ltx_title_abstract">Abstract</h6>
-    
+
 <p class="ltx_p">Quantitative cardiac magnetic resonance T1 and T2 mapping enable myocardial tissue characterisation but the lengthy scan times restrict their widespread clinical application. We propose a deep learning method that incorporates a time dependency <span class="ltx_text ltx_font_italic">Latent Transformer</span> module to model relationships between parameterised time frames for improved reconstruction from undersampled data. The module, implemented as a multi-resolution sequence-to-sequence transformer, is integrated into an encoder-decoder architecture to leverage the inherent temporal correlations in relaxation processes. The presented results for accelerated T1 and T2 mapping show the model recovers maps with higher fidelity by explicit incorporation of time dynamics. This work demonstrates the importance of temporal modelling for artifact-free reconstruction in quantitative MRI.</p>
-  
+
 </div>
 <div class="ltx_keywords">
 <h6 class="ltx_title ltx_title_keywords">Keywords: </h6>Quantitative MRI Deep learning MRI reconstruction
@@ -148,13 +148,13 @@ Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK</span><
 <p class="ltx_p">The proposed model architecture consists of two complementary components as illustrated in Figure <a href="#S2.F1" title="Figure 1 ‣ 2.3.2 Single-coil ‣ 2.3 Model ‣ 2 Materials and Methods ‣ T1/T2 relaxation temporal modelling from accelerated acquisitions using a Latent Transformer" class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>:</p>
 <ul id="S2.I1" class="ltx_itemize">
 <li id="S2.I1.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S2.I1.i1.p1" class="ltx_para">
 <p class="ltx_p">An encoder-decoder network that serves as the main artifact removal model. In our experiments, we utilise a U-Net architecture as a strong baseline model. The goal of this encoder-decoder network is to remove large-scale artifacts from the input MRI frames.</p>
 </div>
 </li>
 <li id="S2.I1.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S2.I1.i2.p1" class="ltx_para">
 <p class="ltx_p">The latent transformer model to explicitly capture inter-frame dependencies.</p>
 </div>
@@ -247,13 +247,13 @@ We separate the optimisation into conjugate gradient SENSE <cite class="ltx_cit
 <p class="ltx_p">To evaluate the proposed model, we conducted experiments for both the T1 and T2 mapping tasks using acceleration factors 4, 8, and 10. In this section, we compared two model configurations:</p>
 <ul id="S3.I1" class="ltx_itemize">
 <li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S3.I1.i1.p1" class="ltx_para">
 <p class="ltx_p">U-Net: A baseline U-Net architecture that serves as a standard encoder-decoder network.</p>
 </div>
 </li>
 <li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S3.I1.i2.p1" class="ltx_para">
 <p class="ltx_p">U-Net + Latent Transformer: The proposed model combining the baseline encoder-decoder model with the latent-transformer module to exploit inter-frame dependencies.</p>
 </div>
@@ -469,13 +469,13 @@ We separate the optimisation into conjugate gradient SENSE <cite class="ltx_cit
 <p class="ltx_p">To evaluate the proposed model for multi-coil MRI reconstruction, we compared two model configurations built upon MoDL <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib1" title="MoDL: Model-Based Deep Learning Architecture for Inverse Problems" class="ltx_ref">1</a>]</cite> framework:</p>
 <ul id="S3.I2" class="ltx_itemize">
 <li id="S3.I2.i1" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S3.I2.i1.p1" class="ltx_para">
 <p class="ltx_p">MoDL: The baseline MoDL model using fixed coil sensitivity maps and a standard single-scale network architecture. This serves as the standard MoDL implementation.</p>
 </div>
 </li>
 <li id="S3.I2.i2" class="ltx_item" style="list-style-type:none;">
-<span class="ltx_tag ltx_tag_item">•</span> 
+<span class="ltx_tag ltx_tag_item">•</span>
 <div id="S3.I2.i2.p1" class="ltx_para">
 <p class="ltx_p">MoDL + Proposed Model: An enhanced MoDL pipeline incorporating our proposed single-coil model architecture with latent transformers and learnable coil sensitivity maps.</p>
 </div>
