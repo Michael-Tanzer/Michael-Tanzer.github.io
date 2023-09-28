@@ -4,10 +4,41 @@
 <title>T1/T2 relaxation temporal modelling from accelerated acquisitions using a Latent Transformer</title>
 <!--Generated on Thu Sep 28 16:08:25 2023 by LaTeXML (version 0.8.6) http://dlmf.nist.gov/LaTeXML/.-->
 
-<link rel="stylesheet" href="LaTeXML.css" type="text/css">
-<link rel="stylesheet" href="ltx-article.css" type="text/css">
+<link rel="stylesheet" href="../ar5iv.0.7.7.min.css" type="text/css">
+<link rel="stylesheet" href="../ar5iv-site.0.2.1.css" type="text/css">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="keywords" lang="en" content="Quantitative MRI Deep learning MRI reconstruction">
+
+<script>
+        function detectColorScheme(){
+                var theme="light";
+                var current_theme = localStorage.getItem("ar5iv_theme");
+                if(current_theme){
+                        if(current_theme == "dark"){
+                                theme = "dark";
+                        } }
+                else if(!window.matchMedia) { return false; }
+                else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                        theme = "dark"; }
+                if (theme=="dark") {
+                        document.documentElement.setAttribute("data-theme", "dark");
+                } else {
+                        document.documentElement.setAttribute("data-theme", "light"); } }
+
+        detectColorScheme();
+
+        function toggleColorScheme(){
+                var current_theme = localStorage.getItem("ar5iv_theme");
+                if (current_theme) {
+                        if (current_theme == "light") {
+                                localStorage.setItem("ar5iv_theme", "dark"); }
+                        else {
+                                localStorage.setItem("ar5iv_theme", "light"); } }
+                else {
+                        localStorage.setItem("ar5iv_theme", "dark"); }
+                detectColorScheme(); }
+</script>
+
 </head>
 <body>
 <div class="ltx_page_main">
@@ -16,36 +47,38 @@
 <h1 class="ltx_title ltx_title_document">T1/T2 relaxation temporal modelling from accelerated acquisitions using a Latent Transformer</h1>
 <div class="ltx_authors">
 <span class="ltx_creator ltx_role_author">
-<span class="ltx_personname">Fanwen Wang<span id="footnotex1" class="ltx_note ltx_role_footnotemark"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">footnotemark: </span>
-          
-        </span></span></span><span class="ltx_ERROR undefined">\orcidID</span>0000-0001-5491-8333
-</span><span class="ltx_author_notes"><span>1
-Imperial College London, Exhibition Road, London SW7 2AZ, UK 12Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK 2</span></span></span>
+<span class="ltx_personname">Fanwen Wang
+</span><span class="ltx_author_notes"><span>Equal contribution<br>
+Imperial College London, Exhibition Road, London SW7 2AZ, UK<br>
+Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK</span></span></span>
 <span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
-<span class="ltx_personname">Michael Tänzer<span class="ltx_ERROR undefined">\orcidID</span>0000-0002-9046-1008
-</span><span class="ltx_author_notes"><span>Equal contribution1
-Imperial College London, Exhibition Road, London SW7 2AZ, UK 12Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK 2</span></span></span>
+<span class="ltx_personname">Michael Tänzer
+</span><span class="ltx_author_notes"><span>Equal contribution<br>
+Imperial College London, Exhibition Road, London SW7 2AZ, UK<br>
+Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK</span></span></span>
 <span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
-<span class="ltx_personname">Mengyun Qiao<span class="ltx_ERROR undefined">\orcidID</span>0000-0002-5157-1079
-</span><span class="ltx_author_notes"><span>1
-Imperial College London, Exhibition Road, London SW7 2AZ, UK 1</span></span></span>
+<span class="ltx_personname">Mengyun Qiao
+</span><span class="ltx_author_notes"><span>
+Imperial College London, Exhibition Road, London SW7 2AZ, UK</span></span></span>
 <span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
-<span class="ltx_personname">Wenjia Bai<span class="ltx_ERROR undefined">\orcidID</span>0000-0003-2943-7698
-</span><span class="ltx_author_notes"><span>1
-Imperial College London, Exhibition Road, London SW7 2AZ, UK 1</span></span></span>
+<span class="ltx_personname">Wenjia Bai
+</span><span class="ltx_author_notes"><span>
+Imperial College London, Exhibition Road, London SW7 2AZ, UK</span></span></span>
 <span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
-<span class="ltx_personname">Daniel Rueckert<span class="ltx_ERROR undefined">\orcidID</span>0000-0002-5683-5889
-</span><span class="ltx_author_notes"><span>1
-Imperial College London, Exhibition Road, London SW7 2AZ, UK 13Technische Universität München (TUM), Arcisstraße 21, 80333 München, Germany
-3</span></span></span>
+<span class="ltx_personname">Daniel Rueckert
+</span><span class="ltx_author_notes"><span>
+Imperial College London, Exhibition Road, London SW7 2AZ, UK<br>
+Technische Universität München (TUM), Arcisstraße 21, 80333 München, Germany</span></span></span>
 <span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
-<span class="ltx_personname">Guang Yang<span class="ltx_ERROR undefined">\orcidID</span>0000-0001-7344-7733
-</span><span class="ltx_author_notes"><span>1
-Imperial College London, Exhibition Road, London SW7 2AZ, UK 12Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK 2</span></span></span>
+<span class="ltx_personname">Guang Yang
+</span><span class="ltx_author_notes"><span>
+Imperial College London, Exhibition Road, London SW7 2AZ, UK<br>
+Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK</span></span></span>
 <span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
-<span class="ltx_personname">Sonia Nielles-Vallespin<span class="ltx_ERROR undefined">\orcidID</span>0000-0003-0412-2796
-</span><span class="ltx_author_notes"><span>1
-Imperial College London, Exhibition Road, London SW7 2AZ, UK 12Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK 2</span></span></span>
+<span class="ltx_personname">Sonia Nielles-Vallespin
+</span><span class="ltx_author_notes"><span>
+Imperial College London, Exhibition Road, London SW7 2AZ, UK<br>
+Royal Brompton and Harefield hospital, Sydney Street, London SW3 6NP, UK</span></span></span>
 </div>
 
 <div class="ltx_abstract">
@@ -873,8 +906,7 @@ This work was supported by the British Heart Foundation (RG/19/1/34160). Guang Y
 </article>
 </div>
 <footer class="ltx_page_footer">
-<div class="ltx_page_logo">Generated  on Thu Sep 28 16:08:25 2023 by <a href="http://dlmf.nist.gov/LaTeXML/">LaTeXML <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="[LOGO]"></a>
-</div></footer>
+</footer>
 </div>
 </body>
 </html>
