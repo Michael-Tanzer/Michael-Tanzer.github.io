@@ -67,7 +67,7 @@ content:
       - layout: top-middle
         border: weak  # Value of `weak` will display a weak border below this item. # Any 
                       # other value (or no value) means no border will be displayed
-        title: Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reduction
+        title: [Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reduction](/papers/Faster_Diffusion_Cardiac_MRI_with_Deep_Learning_based_breath_hold_reduction/main.html)
         link: https://link.springer.com/chapter/10.1007/978-3-031-12053-4_8
         link_text: Conference proceedings
         additional_links:
@@ -83,7 +83,7 @@ content:
       - layout: top-middle
         border: weak  # Value of `weak` will display a weak border below this item. # Any 
                       # other value (or no value) means no border will be displayed
-        title: Review of data types and model dimensionality for cardiac DTI SMS-related artefact removal
+        title: [Review of data types and model dimensionality for cardiac DTI SMS-related artefact removal](/papers/Review_of_data_types_and_model_dimensionality_for_DTCMR/main.html)
         link: https://link.springer.com/chapter/10.1007/978-3-031-12053-4_8
         link_text: Conference proceedings
         additional_links:
@@ -99,7 +99,7 @@ content:
       - layout: top-middle
         border: null  # Value of `weak` will display a weak border below this item. # Any 
                       # other value (or no value) means no border will be displayed
-        title: Memorisation versus Generalisation in Pre-trained Language Models
+        title: [Memorisation versus Generalisation in Pre-trained Language Models](/papers/Memorisation_versus_Generalisation_in_Pretrained_Language_Models/main.html)
         link: https://link.springer.com/chapter/10.1007/978-3-031-23443-9_12
         link_text: Conference proceedings
         additional_links:

@@ -1,0 +1,1619 @@
+<!DOCTYPE html><html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reduction</title>
+<!--Generated on Thu Sep 28 17:18:43 2023 by LaTeXML (version 0.8.6) http://dlmf.nist.gov/LaTeXML/.-->
+
+<link rel="stylesheet" href="../ar5iv.0.7.7.min.css" type="text/css">
+<link rel="stylesheet" href="../ar5iv-site.0.2.1.css" type="text/css">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="keywords" lang="en" content="MRI Deep Learning Diffusion Cardiac">
+
+<script>
+    function detectColorScheme(){
+        var theme="light";
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if(current_theme){
+            if(current_theme == "dark"){
+                theme = "dark";
+            } }
+        else if(!window.matchMedia) { return false; }
+        else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark"; }
+        if (theme=="dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+            document.documentElement.setAttribute("data-theme", "light"); } }
+
+    detectColorScheme();
+
+    function toggleColorScheme(){
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if (current_theme) {
+            if (current_theme == "light") {
+                localStorage.setItem("ar5iv_theme", "dark"); }
+            else {
+                localStorage.setItem("ar5iv_theme", "light"); } }
+        else {
+            localStorage.setItem("ar5iv_theme", "dark"); }
+        detectColorScheme(); }
+
+    function changeTableColoursColorscheme() {
+        console.log("test")
+        if (document.documentElement.getAttribute("data-theme") === "dark") {
+            // wait until table is loaded, keep checking every 100ms
+            var check1 = setInterval(function() {
+                if (document.getElementById("S4.T1")) {
+                    clearInterval(check1);
+                    changeTableColoursColorschemeDark("S4.T1"); }
+            }, 100);
+        }
+    }
+
+    function changeTableColoursColorschemeDark(table_id) {
+        var table = document.getElementById(table_id);
+        console.log(table);
+        var rows = table.getElementsByTagName("tr");
+        console.log(rows);
+        for (i = 0; i < rows.length; i++) {
+            var cols = rows[i].getElementsByTagName("td");
+            for (j = 0; j < cols.length; j++) {
+                let current_colour = cols[j].style.backgroundColor;
+                // compute dark version of the same colour
+                let current_colour_rgb = current_colour.match(/\d+/g);
+
+                if (current_colour_rgb == null) {
+                    continue;
+                }
+
+                let new_colour_rgb = darkenColor(current_colour_rgb, 0.7);
+                console.log(new_colour_rgb);
+                let new_colour = "rgb(" + new_colour_rgb[0] + "," + new_colour_rgb[1] + "," + new_colour_rgb[2] + ")";
+
+                cols[j].style.backgroundColor = new_colour;
+                // cols[j].style.color = "#f8f8f8";
+                cols[j].children[0].style.backgroundColor = new_colour;
+            }
+        }
+    }
+
+    // Function to darken an RGB color
+    function darkenColor(rgb, factor) {
+        // Parse the RGB components
+        const r = rgb[0] / 255;
+        const g = rgb[1] / 255;
+        const b = rgb[2] / 255;
+
+        // Convert RGB to HSL
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+
+        // Darken the color by reducing the lightness
+        l -= l * factor;
+
+        // Convert HSL back to RGB
+        let c = (1 - Math.abs(2 * l - 1)) * s;
+        let x = c * (1 - Math.abs((h * 6) % 2 - 1));
+        let m = l - c / 2;
+
+        let r2, g2, b2;
+        if (h < 1/6) {
+            r2 = c;
+            g2 = x;
+            b2 = 0;
+        } else if (h < 1/3) {
+            r2 = x;
+            g2 = c;
+            b2 = 0;
+        } else if (h < 1/2) {
+            r2 = 0;
+            g2 = c;
+            b2 = x;
+        } else if (h < 2/3) {
+            r2 = 0;
+            g2 = x;
+            b2 = c;
+        } else if (h < 5/6) {
+            r2 = x;
+            g2 = 0;
+            b2 = c;
+        } else {
+            r2 = c;
+            g2 = 0;
+            b2 = x;
+        }
+
+        r3 = (r2 + m) * 255;
+        g3 = (g2 + m) * 255;
+        b3 = (b2 + m) * 255;
+
+        return [Math.round(r3), Math.round(g3), Math.round(b3)];
+    }
+
+    changeTableColoursColorscheme();
+</script>
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_title_document">Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reduction<span class="ltx_note ltx_role_thanks"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">*</sup><span class="ltx_note_type">thanks: </span>This work was supported in part by the UKRI CDT in AI for Healthcare <a href="http://ai4health.io" title="" class="ltx_ref ltx_url" style="color:#0000FF;">http://ai4health.io</a> (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1).</span></span></span>
+</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Michael Tänzer
+</span><span class="ltx_author_notes"><span>Imperial College London </span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Pedro Ferreira
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Andrew Scott
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Zohya Khalique
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Maria Dwornik
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Dudley Pennell
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Guang Yang
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+<br class="ltx_break">Daniel Rueckert
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Technische Universität München (TUM)
+</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+<br class="ltx_break">Sonia Nielles-Vallespin
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+</div>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+    
+<p class="ltx_p">Diffusion Tensor Cardiac Magnetic Resonance (DT-CMR) enables us to probe the microstructural arrangement of cardiomyocytes within the myocardium in vivo and non-invasively, which no other imaging modality allows. This innovative technology could revolutionise the ability to perform cardiac clinical diagnosis, risk stratification, prognosis and therapy follow-up. However, DT-CMR is currently inefficient with over six minutes needed to acquire a single 2D static image. Therefore, DT-CMR is currently confined to research but not used clinically. We propose to reduce the number of repetitions needed to produce DT-CMR datasets and subsequently de-noise them, decreasing the acquisition time by a linear factor while maintaining acceptable image quality. Our proposed approach, based on Generative Adversarial Networks, Vision Transformers, and Ensemble Learning, performs significantly and considerably better than previous proposed approaches, bringing single breath-hold DT-CMR closer to reality.</p>
+  
+</div>
+<div class="ltx_keywords">
+<h6 class="ltx_title ltx_title_keywords">Keywords: </h6>MRI Deep Learning Diffusion Cardiac
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p class="ltx_p">Diffusion Tensor Cardiac Magnetic Resonance (DT-CMR) is the only medical imaging modality that allows us to non-invasively interrogate the micro-structure of the beating heart at a scale and resolution that other modalities cannot achieve <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib88" title="Principles of Diffusion Tensor Imaging and Its Applications to Basic Neuroscience Research" class="ltx_ref">16</a>]</cite>. In clinical research studies, DT-CMR has been shown to be useful in phenotyping several cardiomyopathies such as hypertrophic cardiomyopathy (HCM) and dilated cardiomyopathy (DCM) by quantitatively analysing the microstructural organisation and orientation of cardiomyocytes within the myocardium. DT-CMR also has the additional advantage of not requiring any contrast agent, which may be burdensome for patients with reduced kidney function <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib104" title="Gadolinium-Associated Nephrogenic Systemic Fibrosis" class="ltx_ref">19</a>]</cite>.</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p class="ltx_p">In its current state, the acquisition time prevents clinical translation as around six minutes are needed to acquire a single 2D slice. For a typical acquisition protocol we require a minimum of three slices (basal, mid, apical), at least 7 different diffusion encoding steps and two time points of the cardiac cycle (systole and diastole), totalling 60 breath-holds and 90 minutes and making it clinically unfeasible. The long scan times have various source, but, most importantly, the protocol acquires multiple repetitions of each image to increase the signal-to-noise ratio (SNR) and to reduce motion-related artefacts. In this study, we will tackle the problem by reducing the number of repetitions.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p class="ltx_p">Our contribution, shown in Figure <a href="#S1.F1" title="Figure 1 ‣ 1 Introduction ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, is a novel deep-learning framework that can be used to reduce the number of repetitions used in the DT-CMR acquisition. Using fewer averages leads to lower SNR, and deep learning can be used to recover the original full-repetition data. This allows us to greatly reduce the total acquisition time with minimal loss of image quality. This method could potentially be adopted to acquire a DT-CMR scan in only one breath hold while maintaining acceptable quality, reducing the scan time from several minutes to well under a minute.</p>
+</div>
+<figure id="S1.F1" class="ltx_figure"><img src="x2.png" id="S1.F1.g1" class="ltx_graphics ltx_centering" width="676" height="536" alt="Proposed deep learning framework. From left to right, we can see the original input data comprised of several repetitions that are then averaged to increase the SNR and reduce artefacts. This averaged data is then used to compute (noisy) diffusion tensors using a least squares tensor fit. From the noisy tensors we can then compute noisy DT-CMR maps (lower central part of the image). In our proposed framework we use an ensemble of deep-learning models to de-noise the diffusion tensors and therefore obtain better DT-CMR maps (shown on the right).">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Proposed deep learning framework. From left to right, we can see the original input data comprised of several repetitions that are then averaged to increase the SNR and reduce artefacts. This averaged data is then used to compute (noisy) diffusion tensors using a least squares tensor fit. From the noisy tensors we can then compute noisy DT-CMR maps (lower central part of the image). In our proposed framework we use an ensemble of deep-learning models to de-noise the diffusion tensors and therefore obtain better DT-CMR maps (shown on the right).</figcaption>
+</figure>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Background</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>DT-CMR</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p class="ltx_p">DT-CMR measures the diffusion pattern of water molecules in every voxel of the imaged tissue and approximates it with a 3D tensor. As the free diffusion of water in the tissue is constrained by the shape of cardiac muscle microstructure for every voxel, studying the extracted 3D tensors has been shown to give us information related to the shape and orientation of the cardiomyocytes in the imaged tissue.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p class="ltx_p">In-vivo DT-CMR requires the rapid acquisition of multiple single-shot diffusion-weighted images with diffusion encoded in at least six different 3D directions. Single-shot encoding acquisitions translate to low SNR images. Low SNR is also an inherent issue in DT-CMR as we measure the signal lost due to diffusion. Therefore, multiple repetitions are commonly acquired to increase the quality of the signal. While improving the SNR, this also translates to longer acquisition times and extra breath-holds for the patient. Our clinical research protocol requires approximately 12 breath-holds for every single DT-CMR slice at a single time point in the cardiac cycle. The series of signal intensities is then fitted to a rank-2 diffusion tensor using a linear least-square (LLS) <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib42" title="Introduction to diffusion tensor imaging mathematics: Part III. Tensor calculation, noise, simulations, and optimization" class="ltx_ref">11</a>]</cite> fitting or alternatively more advanced linear and non-linear iterative methods <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib46" title="Iterative reweighted linear least squares for accurate, fast, and robust estimation of diffusion magnetic resonance parameters" class="ltx_ref">6</a>]</cite>.</p>
+</div>
+<div id="S2.SS1.p3" class="ltx_para">
+<p class="ltx_p">The cardiac diffusion tensor information is commonly visualised and quantified through four per-voxel metric maps: Mean Diffusivity (MD) that quantifies the total diffusion in the voxel (higher corresponds to more diffusion), Fractional Anisotropy (FA) that quantifies the level of organisation of the tissue (higher corresponds to a higher organisation), Helix Angle (HA) and Second Eigenvector (E2) Angle (E2A) that quantify the 3D orientation and shape of the tissue in the voxel <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib144" title="Inferring microstructural features and the physiological state of tissues from diffusion-weighted images" class="ltx_ref">2</a>, <a href="#bib.bib143" title="The presence of two local myocardial sheet populations confirmed by diffusion tensor mri and histological validation" class="ltx_ref">12</a>]</cite>.
+</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>De-noising in DT-CMR</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p class="ltx_p">There are several ways to approach the task of reducing the number of repetitions used to compute the DT-CMR maps. In our proposed approach, we will see how we treat it as de-noising task where the goal is to produce de-noised diffusion tensors from noisy tensors.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p class="ltx_p">De-noising is the process of removing noise from a given signal with the aim of restoring the original noise-free version of the signal. In a number of studies the noise is assumed to come from a known distribution, giving rise to models that work on this assumption to remove it <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib138" title="Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising" class="ltx_ref">25</a>]</cite>, while some other studies instead do not make any assumption on the source of the noise and produce models that are more robust to real-world noise <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib5" title="Noise2Self: Blind Denoising by Self-Supervision" class="ltx_ref">3</a>]</cite>. In recent years, deep learning-based de-noising has been extremely popular, both applied to photographs <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib131" title="Image Denoising and Inpainting with Deep Neural Networks" class="ltx_ref">23</a>]</cite> and to other types of signals, such as MRI data <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib49" title="Denoising of 3D magnetic resonance images with multi-channel residual learning of convolutional neural network" class="ltx_ref">10</a>, <a href="#bib.bib80" title="MRI Denoising Using Deep Learning" class="ltx_ref">15</a>]</cite>, CT data <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib13" title="Low-dose CT denoising with convolutional neural network" class="ltx_ref">5</a>]</cite>, audio data <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib131" title="Image Denoising and Inpainting with Deep Neural Networks" class="ltx_ref">23</a>]</cite>, and point clouds <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib38" title="Total Denoising: Unsupervised Learning of 3D Point Cloud Cleaning" class="ltx_ref">9</a>]</cite>. Focusing on de-noising models designed for imaging data, Batson et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib5" title="Noise2Self: Blind Denoising by Self-Supervision" class="ltx_ref">3</a>]</cite> used a U-Net model and a self-supervised approach to blindly de-noise images without using an assumed noise distribution. Park et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib93" title="Unpaired Image Denoising Using a Generative Adversarial Network in X-Ray CT" class="ltx_ref">17</a>]</cite> trained a de-noising model on unpaired CT data using a GAN model. More recently, Vision Transformers have also been used to tackle the de-noising problem <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib73" title="SwinIR: Image Restoration Using Swin Transformer" class="ltx_ref">13</a>, <a href="#bib.bib137" title="Restormer: Efficient Transformer for High-Resolution Image Restoration" class="ltx_ref">24</a>, <a href="#bib.bib14" title="Pre-Trained Image Processing Transformer" class="ltx_ref">4</a>, <a href="#bib.bib127" title="Uformer: A General U-Shaped Transformer for Image Restoration" class="ltx_ref">20</a>]</cite>.
+</p>
+</div>
+<div id="S2.SS2.p3" class="ltx_para">
+<p class="ltx_p">Phipps et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib94" title="Accelerated in Vivo Cardiac Diffusion-Tensor MRI Using Residual Deep Learning–based Denoising in Participants with Obesity" class="ltx_ref">18</a>]</cite> used a residual-learning approach to de-noise the diffusion weighted images prior to the tensor calculation to reduce the number of acquisitions required to produce high-quality DT-CMR maps. In our previous work <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib141" title="This work has been accepted to jmri 2022 but it is not publicly available. all the information has been anonymised." class="ltx_ref">21</a>]</cite>, our group also showed how a U-NET-based model can be successfully used to predict de-noised tensors directly from noisy images.
+</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Methods</h2>
+
+<div id="S3.p1" class="ltx_para">
+<p class="ltx_p">The study is divided into two main sections: (1) the analysis of how the number and choice of repetitions affect the quality of the DT-CMR maps and (2) our proposed deep-learning-based de-noising procedure and the validation of its results.</p>
+</div>
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>Data acquisition</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p class="ltx_p">All data used in this work was approved by the National Research Ethics Service. All subjects gave written informed consent.</p>
+</div>
+<div id="S3.SS1.p2" class="ltx_para">
+<p class="ltx_p">All the data were acquired using a Siemens Skyra 3T MRI scanner and more recently a Siemens Vida 3T MRI scanner (Siemens AG, Erlangen, Germany) with diffusion weighted stimulated echo acquisition mode (STEAM) single shot echo planar imaging (EPI) sequence with reduced phase field-of-view and fat saturation, TR = 2RR intervals, TE = 23 ms, SENSE or GRAPPA R = 2, echo train duration = 13 ms, at a spatial resolution of 2.8 x 2.8 x 8.0 mm<math id="S3.SS1.p2.m1" class="ltx_Math" alttext="{}^{3}" display="inline"><msup><mi></mi><mn>3</mn></msup></math>. Diffusion was encoded in six directions with diffusion- weightings of b = 150 and 600 s/mm<math id="S3.SS1.p2.m2" class="ltx_Math" alttext="{}^{2}" display="inline"><msup><mi></mi><mn>2</mn></msup></math> in a short-axis mid-ventricular slice. Additionally, reference images were also acquired with minimal diffusion weighting, named here as “b<math id="S3.SS1.p2.m3" class="ltx_Math" alttext="{}_{0}" display="inline"><msub><mi></mi><mn>0</mn></msub></math>” images. All diffusion data were acquired under multiple breath-holds, each with a duration of 18 heartbeats. We used a total of 744 DT-CMR datasets, containing a mixture of healthy volunteers (26%, n = 197) and patient (74%, n = 547) scans acquired in either the diastolic pause (49%, n = 368) or end-systole (51%, n = 376). The patient data comes from several conditions including 31 amyloidoses, 45 dilated cardiomyopathy (DCM), 11 Fabry’s disease, 48 HCM genotype-positive-phenotype-negative (HCM G+P-), 66 hypertrophic cardiomyopathies (HCM), 4 hypertensive DCM (hDCM), 246 acute myocardial infarction (MI), 7 Marfan’s syndrome, and 89 in-recovery DCM (rDCM). </p>
+</div>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Data preparation</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p class="ltx_p">The mean number of repetitions was 12 ± 2.0 for b<math id="S3.SS2.p1.m1" class="ltx_Math" alttext="{}_{0}" display="inline"><msub><mi></mi><mn>0</mn></msub></math> images; 10 ± 2.2 for b = 600 s/mm<math id="S3.SS2.p1.m2" class="ltx_Math" alttext="{}^{2}" display="inline"><msup><mi></mi><mn>2</mn></msup></math> images; and 2 ± 0.6 for b = 150 s/mm<math id="S3.SS2.p1.m3" class="ltx_Math" alttext="{}^{2}" display="inline"><msup><mi></mi><mn>2</mn></msup></math>. These datasets, containing all acquired data, were used to calculate the reference tensor results for each subject using a newly developed tool written in Python and validated against our previous post-processing software
+<cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib142" title="Previous work by our research group. All the information has been anonymised." class="ltx_ref">22</a>]</cite>. Before tensor calculation, all the diffusion images were assessed visually, and images corrupted with bulk motion artefacts were removed. Subsequently, all remaining images were registered with a multi-resolution rigid sub-pixel translation algorithm <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib34" title="Efficient subpixel image registration algorithms" class="ltx_ref">8</a>]</cite>, manually thresholded to remove background features. Lastly, the left ventricle (LV) myocardium was segmented excluding papillary muscle. </p>
+</div>
+<div id="S3.SS2.p2" class="ltx_para">
+<p class="ltx_p">Tensors were calculated with an LLS fit of all the acquired repetitions and respective diffusion weightings and directions <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib42" title="Introduction to diffusion tensor imaging mathematics: Part III. Tensor calculation, noise, simulations, and optimization" class="ltx_ref">11</a>]</cite>. The tensors were then used to compute the DT-CMR maps that we considered as the ground truth for all the comparisons in the study. </p>
+</div>
+<div id="S3.SS2.p3" class="ltx_para">
+<p class="ltx_p">We were also able to dynamically create three new datasets with an increasingly reduced number of repetitions. We assessed the quality or the DT-CMR maps produced from different subsets of repetitions (e.g., using the first N repetitions vs using the last N repetitions, see Section <a href="#S3.SS3" title="3.3 The effect of repetitions ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">3.3</span></a>). We proposed three choices for the numbers of repetitions that result in three datasets:</p>
+<ul id="S3.I1" class="ltx_itemize">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p class="ltx_p">5BH. Four repetitions of b<math id="S3.I1.i1.p1.m1" class="ltx_Math" alttext="{}_{0}" display="inline"><msub><mi></mi><mn>0</mn></msub></math> and b<math id="S3.I1.i1.p1.m2" class="ltx_Math" alttext="{}_{600}" display="inline"><msub><mi></mi><mn>600</mn></msub></math>, and one repetition of b<math id="S3.I1.i1.p1.m3" class="ltx_Math" alttext="{}_{150}" display="inline"><msub><mi></mi><mn>150</mn></msub></math>. This acquisition would require 5 breath-holds.</p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p class="ltx_p">3BH. Two repetitions of b<math id="S3.I1.i2.p1.m1" class="ltx_Math" alttext="{}_{0}" display="inline"><msub><mi></mi><mn>0</mn></msub></math> and <math id="S3.I1.i2.p1.m2" class="ltx_Math" alttext="b_{600}" display="inline"><msub><mi>b</mi><mn>600</mn></msub></math> , and one repetition of b<math id="S3.I1.i2.p1.m3" class="ltx_Math" alttext="{}_{150}" display="inline"><msub><mi></mi><mn>150</mn></msub></math>. This acquisition would require 3 breath-holds.</p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p class="ltx_p">1BH. One repetition of b<math id="S3.I1.i3.p1.m1" class="ltx_Math" alttext="{}_{0}" display="inline"><msub><mi></mi><mn>0</mn></msub></math> and b<math id="S3.I1.i3.p1.m2" class="ltx_Math" alttext="{}_{600}" display="inline"><msub><mi></mi><mn>600</mn></msub></math> only. This acquisition would require 1 breath-hold.</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S3.SS2.p4" class="ltx_para">
+<p class="ltx_p">For the purpose of training a deep-learning model, the data was also randomly augmented with random rotation and random cropping.</p>
+</div>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.3 </span>The effect of repetitions</h3>
+
+<div id="S3.SS3.p1" class="ltx_para">
+<p class="ltx_p">In a standard DT-CMR acquisition, we acquire several repetitions to reduce the effect of noise and motion. To do so, we ask the patient to hold and resume their breathing at fixed intervals.</p>
+</div>
+<div id="S3.SS3.p2" class="ltx_para">
+<p class="ltx_p">First, we quantitatively studied how the number of repetitions (and breath-holds) affects the quality of the maps. We compared the maps produced from all available breath-holds with maps computed from <math id="S3.SS3.p2.m1" class="ltx_Math" alttext="M" display="inline"><mi>M</mi></math> repetitions where <math id="S3.SS3.p2.m2" class="ltx_Math" alttext="M" display="inline"><mi>M</mi></math> represents a number smaller than the number of available repetitions for the patient. We repeated the process separately for the four maps.</p>
+</div>
+<div id="S3.SS3.p3" class="ltx_para">
+<p class="ltx_p">Secondly, we analysed how choosing different repetition subsets affects the final quality of the DT-CMR acquisition. We defined five different methods to select a subset from the eight original repetitions: (1) we selected the first <math id="S3.SS3.p3.m1" class="ltx_Math" alttext="M" display="inline"><mi>M</mi></math> repetitions (First, F); (2) we selected the central <math id="S3.SS3.p3.m2" class="ltx_Math" alttext="M" display="inline"><mi>M</mi></math> repetitions (Centre, C); (3) we used the last <math id="S3.SS3.p3.m3" class="ltx_Math" alttext="M" display="inline"><mi>M</mi></math> repetitions (Last, L); (4) uniformly random repetition sampling (Random, R); (5) based on the clinician’s observation that the first breath-hold is usually lower-quality due to the patient adjusting to holding and resuming their breath, we selected the first <math id="S3.SS3.p3.m4" class="ltx_Math" alttext="M+1" display="inline"><mrow><mi>M</mi><mo>+</mo><mn>1</mn></mrow></math> repetitions and discarded the first one (First+1, F1).</p>
+</div>
+</section>
+<section id="S3.SS4" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.4 </span>Deep-learning-based de-noising</h3>
+
+<div id="S3.SS4.p1" class="ltx_para">
+<p class="ltx_p">In this study, we developed and trained a deep-learning model based on the current state-of-the-art architectures for image de-noising to improve the quality of noisy DT-CMR tensors produced from the low-breath-holds datasets described above.</p>
+</div>
+<section id="S3.SS4.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">3.4.1 </span>Input and output</h4>
+
+<div id="S3.SS4.SSS1.p1" class="ltx_para">
+<p class="ltx_p">The output of all the models reported here is the diffusion tensor components. As the tensors are represented by a rank-2 symmetric matrix, they only contain six unique components: for a <math id="S3.SS4.SSS1.p1.m1" class="ltx_Math" alttext="3\times 3" display="inline"><mrow><mn>3</mn><mo>×</mo><mn>3</mn></mrow></math> matrix D we only need the upper triangular elements to represent it. All input and output images were cropped to be <math id="S3.SS4.SSS1.p1.m2" class="ltx_Math" alttext="128\times 128" display="inline"><mrow><mn>128</mn><mo>×</mo><mn>128</mn></mrow></math> pixels in size. Thus, the output is a <math id="S3.SS4.SSS1.p1.m3" class="ltx_Math" alttext="128\times 128" display="inline"><mrow><mn>128</mn><mo>×</mo><mn>128</mn></mrow></math> image with 6 channels. For the input we compared different approaches: building on our previous work, we used the average diffusion weighted images as input, resulting in 13 channels for the 5BH and 3BH datasets (1 b<math id="S3.SS4.SSS1.p1.m4" class="ltx_Math" alttext="{}_{0}" display="inline"><msub><mi></mi><mn>0</mn></msub></math> + 6 b<math id="S3.SS4.SSS1.p1.m5" class="ltx_Math" alttext="{}_{600}" display="inline"><msub><mi></mi><mn>600</mn></msub></math> + 6 b<math id="S3.SS4.SSS1.p1.m6" class="ltx_Math" alttext="{}_{150}" display="inline"><msub><mi></mi><mn>150</mn></msub></math>) and 7 channels for the 1BH dataset (1 b<math id="S3.SS4.SSS1.p1.m7" class="ltx_Math" alttext="{}_{0}" display="inline"><msub><mi></mi><mn>0</mn></msub></math> + 6 b<math id="S3.SS4.SSS1.p1.m8" class="ltx_Math" alttext="{}_{600}" display="inline"><msub><mi></mi><mn>600</mn></msub></math>). Alternatively, we also experimented with de-noising diffusion tensors directly, which translated to a six-channel input image.</p>
+</div>
+<div id="S3.SS4.SSS1.p2" class="ltx_para">
+<p class="ltx_p">We had two types of inputs: diffusion-weighted images (DWI) or diffusion tensors. In the case of DWI, the images were normalised in the range <math id="S3.SS4.SSS1.p2.m1" class="ltx_Math" alttext="[0,1]" display="inline"><mrow><mo stretchy="false">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false">]</mo></mrow></math> by dividing them by the maximum value present in the dataset. The background pixels were also replaced with zeros. The diffusion tensors were instead either normalised by a fixed amount (500) that was empirically found to make most values in the range <math id="S3.SS4.SSS1.p2.m2" class="ltx_Math" alttext="[-1,1]" display="inline"><mrow><mo stretchy="false">[</mo><mrow><mo>-</mo><mn>1</mn></mrow><mo>,</mo><mn>1</mn><mo stretchy="false">]</mo></mrow></math> or normalised by performing channel-wise z-score normalisation across the whole dataset. In the latter case, the normalisation was undone before computing the maps.</p>
+</div>
+<div id="S3.SS4.SSS1.p3" class="ltx_para">
+<p class="ltx_p">The data were randomly divided into three parts: a training set, a validation set, and a test set with ratios of 80:10:10 respectively. In order to ensure consistency, all the experiments maintained the same random split.</p>
+</div>
+</section>
+<section id="S3.SS4.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">3.4.2 </span>Model</h4>
+
+<div id="S3.SS4.SSS2.p1" class="ltx_para">
+<p class="ltx_p">We compared our new model with our previous work as the setting is extremely similar to the one proposed here and we had obtained promising results. In our previous setting, we used a U-Net model with six encoders and six decoders. Each encoding layer consisted of two blocks, each containing a convolution layer, a batch normalisation layer and the leaky ReLU activation function; after the two blocks, a max-pooling operator was applied. Each decoding layer consisted of two blocks: the first one contained a transpose convolution, a concatenation operation, batch normalisation, and the leaky ReLU activation; the second one instead consisted of a convolution, batch normalisation, and the leaky ReLU activation. The concatenation was between encoding and decoding layers as per the original U-Net formulation. This baseline model contained a total of 31 million trainable parameters.
+</p>
+</div>
+<div id="S3.SS4.SSS2.p2" class="ltx_para">
+<p class="ltx_p">We proposed several modifications to the baseline above. To show the effect of these changes, we progressively introduced them on the baseline model to show how they affected the quality of the output. In these experiments, we kept the main structure of the model unchanged and we did not modify the training hyperparameters. Specifically, in order, we experimented with:</p>
+<ol id="S3.I2" class="ltx_enumerate">
+<li id="S3.I2.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">1.</span> 
+<div id="S3.I2.i1.p1" class="ltx_para">
+<p class="ltx_p">U-NET image-to-tensor baseline model.</p>
+</div>
+</li>
+<li id="S3.I2.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">2.</span> 
+<div id="S3.I2.i2.p1" class="ltx_para">
+<p class="ltx_p">Baseline with channel normalisation (BL+CN): the output tensors were normalised with a channel-wise z-score normalisation.</p>
+</div>
+</li>
+<li id="S3.I2.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">3.</span> 
+<div id="S3.I2.i3.p1" class="ltx_para">
+<p class="ltx_p">Baseline with tensor-to-tensor training (BL+T2T): the input type was changed from images to tensors, making the task a tensor de-noising task. This also allowed us to use residual learning for our training, improving convergence and performance. For this experiment, the tensors were only normalised by dividing all the values by a fixed amount.</p>
+</div>
+</li>
+<li id="S3.I2.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">4.</span> 
+<div id="S3.I2.i4.p1" class="ltx_para">
+<p class="ltx_p">BL+CN with tensor to tensor (BL+CN+T2T): similarly to BL+T2T, the training was performed on a tensor-to-tensor de-noising task, but in this case, the input and target tensors were normalised with z-score normalisation.</p>
+</div>
+</li>
+<li id="S3.I2.i5" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">5.</span> 
+<div id="S3.I2.i5.p1" class="ltx_para">
+<p class="ltx_p">BL+CN+T2T with multiple datasets (BL+CN+multiT2T): multiple repetition strategies were used simultaneously for the training (First, Centre, Last). This made significantly better use of the available training data and effectively increased the size of the dataset by a factor of 3 (although using non-independent data for the training).</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="S3.SS4.SSS2.p3" class="ltx_para">
+<p class="ltx_p">State of the art (SOTA) models in image de-noising and image restoration were also investigated: Restormer <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib137" title="Restormer: Efficient Transformer for High-Resolution Image Restoration" class="ltx_ref">24</a>]</cite> and Uformer <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib127" title="Uformer: A General U-Shaped Transformer for Image Restoration" class="ltx_ref">20</a>]</cite>. These models were trained with Channel Normalisation and multi tensor-to-tensor.</p>
+</div>
+<div id="S3.SS4.SSS2.p4" class="ltx_para">
+<p class="ltx_p">Finally, we investigated a novel model that made use of all the additions proposed above based on SOTA models. Specifically, we expanded on the Uformer architecture by using it as the generator of a generative adversarial network. The Uformer is a U-Net-like Transformer-based architecture that uses LeWin blocks and residual connections to form a hierarchical encoder-decoder network.</p>
+</div>
+<div id="S3.SS4.SSS2.p5" class="ltx_para">
+<p class="ltx_p">We, therefore, proposed the WGANUformer (WGUF) by adding a PatchGAN discriminator <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib18" title="Patch-Based Image Inpainting with Generative Adversarial Networks" class="ltx_ref">7</a>]</cite> and an adversarial loss to a Uformer. The model was trained with a Wasserstein objective function and with weight clipping as per Arjovsky et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib2" title="Wasserstein GAN" class="ltx_ref">1</a>]</cite> as it combats mode collapse and has been proved to converge to optimality, unlike other GAN formulations.</p>
+</div>
+<div id="S3.SS4.SSS2.p6" class="ltx_para">
+<p class="ltx_p">A schematic representation of the architecture and training procedure can be found in Figure <a href="#S1.F1" title="Figure 1 ‣ 1 Introduction ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.</p>
+</div>
+</section>
+<section id="S3.SS4.SSS3" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">3.4.3 </span>Training</h4>
+
+<div id="S3.SS4.SSS3.p1" class="ltx_para">
+<p class="ltx_p">All training was performed using a workstation with Ubuntu 18.04, CPU Intel i7-10700k, 64 GB of RAM, and an NVIDIA RTX 3080 GPU (Python 3.8 with PyTorch 1.9). The training required a total of 215 GPU-hours, resulting in an estimated 30 kg CO<math id="S3.SS4.SSS3.p1.m1" class="ltx_Math" alttext="{}_{2}" display="inline"><msub><mi></mi><mn>2</mn></msub></math>eq.</p>
+</div>
+<div id="S3.SS4.SSS3.p2" class="ltx_para">
+<p class="ltx_p">During training, a mean absolute error was used as the loss function. For the baseline-based models, other parameters included an Adam optimiser with a learning rate = <math id="S3.SS4.SSS3.p2.m1" class="ltx_Math" alttext="10^{-4}" display="inline"><msup><mn>10</mn><mrow><mo>-</mo><mn>4</mn></mrow></msup></math>, beta1 = 0.9, beta2 = 0.999; a batch-size of 8 images and 500 epochs. These parameters and CNN design were optimised empirically based on our pilot study results. The WGANUformer was trained as per Loshchilov et al. with the AdamW optimiser <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib78" title="Decoupled Weight Decay Regularization" class="ltx_ref">14</a>]</cite>, a learning rate = <math id="S3.SS4.SSS3.p2.m2" class="ltx_Math" alttext="10^{-4}" display="inline"><msup><mn>10</mn><mrow><mo>-</mo><mn>4</mn></mrow></msup></math>, beta1 = 0.9, beta2 = 0.999, weight decay alpha = 0, a batch-size of 8 tensors for 500 epochs. All models were trained from scratch without any pre-training.</p>
+</div>
+<div id="S3.SS4.SSS3.p3" class="ltx_para">
+<p class="ltx_p">In all our experiments, we report the metrics computed on the never-seen-before test set using the model that produced the lowest validation loss.</p>
+</div>
+</section>
+</section>
+<section id="S3.SS5" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.5 </span>DT-CMR post-processing</h3>
+
+<div id="S3.SS5.p1" class="ltx_para">
+<p class="ltx_p">For the computation of all metrics and maps, we post-processed the data with an in-house developed software written in Python. For the post-processing, each subject in the dataset was processed several times:</p>
+<ul id="S3.I3" class="ltx_itemize">
+<li id="S3.I3.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I3.i1.p1" class="ltx_para">
+<p class="ltx_p">Initially to obtain the reference tensor parameter results using all available repetitions.</p>
+</div>
+</li>
+<li id="S3.I3.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I3.i2.p1" class="ltx_para">
+<p class="ltx_p">Every time we computed a dataset with a reduced number of repetitions we performed the same steps (image registration, thresholding, and segmentation). When training the models using images as input, we replaced the tensor calculation process with the model prediction.</p>
+</div>
+</li>
+<li id="S3.I3.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I3.i3.p1" class="ltx_para">
+<p class="ltx_p">To produce a comparison, we also computed the conventional LLS tensor fit from the reduced datasets. All the comparisons are voxel-wise.</p>
+</div>
+</li>
+</ul>
+</div>
+</section>
+<section id="S3.SS6" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.6 </span>DT-CMR maps comparison</h3>
+
+<div id="S3.SS6.p1" class="ltx_para">
+<p class="ltx_p">Four DT-CMR maps representing different aspects of the diffusion of water within the tissue were chosen as output. These maps represent different physical properties and need to be compared with appropriate metrics.</p>
+</div>
+<div id="S3.SS6.p2" class="ltx_para">
+<p class="ltx_p">HA and E2A are angular maps with values between -90<math id="S3.SS6.p2.m1" class="ltx_Math" alttext="{}^{\circ}" display="inline"><msup><mi></mi><mo>∘</mo></msup></math> and 90<math id="S3.SS6.p2.m2" class="ltx_Math" alttext="{}^{\circ}" display="inline"><msup><mi></mi><mo>∘</mo></msup></math>. When comparing these maps, we were interested in the direction of the vector corresponding to the angle but not its orientation. This means that any two angles with a 180<math id="S3.SS6.p2.m3" class="ltx_Math" alttext="{}^{\circ}" display="inline"><msup><mi></mi><mo>∘</mo></msup></math> difference should be identical and two angles with a 90<math id="S3.SS6.p2.m4" class="ltx_Math" alttext="{}^{\circ}" display="inline"><msup><mi></mi><mo>∘</mo></msup></math> difference should have the maximum distance. For HA and E2A we then reported the Mean Angle Absolute Error (MAAE):</p>
+<table id="S3.E1" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.E1.m1" class="ltx_Math" alttext="\text{MAAE}(X,Y)=\frac{1}{NM}\sum_{i=0}^{N}\sum_{j=0}^{M}\begin{cases}\left|X^%
+{(i,j)}-Y^{(i,j)}\right|,\ \text{if}\ \left|X^{(i,j)}-Y^{(i,j)}\right|&lt;90^{%
+\circ}\\
+180^{\circ}-\left|X^{(i,j)}-Y^{(i,j)}\right|,\ \text{otherwise}\end{cases}" display="block"><mrow><mrow><mtext>MAAE</mtext><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mi>X</mi><mo>,</mo><mi>Y</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><mfrac><mn>1</mn><mrow><mi>N</mi><mo>⁢</mo><mi>M</mi></mrow></mfrac><mo>⁢</mo><mrow><munderover><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mi>N</mi></munderover><mrow><munderover><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><mi>j</mi><mo>=</mo><mn>0</mn></mrow><mi>M</mi></munderover><mrow><mo>{</mo><mtable columnspacing="5pt" displaystyle="true" rowspacing="0pt"><mtr><mtd columnalign="left"><mrow><mrow><mrow><mo>|</mo><mrow><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup><mo>-</mo><msup><mi>Y</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup></mrow><mo>|</mo></mrow><mo rspace="7.5pt">,</mo><mrow><mpadded width="+5pt"><mtext>if</mtext></mpadded><mo>⁢</mo><mrow><mo>|</mo><mrow><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup><mo>-</mo><msup><mi>Y</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup></mrow><mo>|</mo></mrow></mrow></mrow><mo>&lt;</mo><msup><mn>90</mn><mo>∘</mo></msup></mrow></mtd><mtd></mtd></mtr><mtr><mtd columnalign="left"><mrow><mrow><msup><mn>180</mn><mo>∘</mo></msup><mo>-</mo><mrow><mo>|</mo><mrow><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup><mo>-</mo><msup><mi>Y</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup></mrow><mo>|</mo></mrow></mrow><mo rspace="7.5pt">,</mo><mtext>otherwise</mtext></mrow></mtd><mtd></mtd></mtr></mtable></mrow></mrow></mrow></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr>
+</table>
+</div>
+<div id="S3.SS6.p3" class="ltx_para">
+<p class="ltx_p">For MD and FA, as they are scalar maps, we therefore reported the Mean Absolute Error (MAE) between de-noised and target maps.</p>
+</div>
+<div id="S3.SS6.p4" class="ltx_para">
+<p class="ltx_p">In the experiments below, we reported the MAAE and MAE across all the voxels in the left ventricle (i.e., ignoring the background and the right ventricle).</p>
+</div>
+<section id="S3.SS6.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">3.6.1 </span>Statistical analysis</h4>
+
+<div id="S3.SS6.SSS1.p1" class="ltx_para">
+<p class="ltx_p">We treated all results as non-parametric as we were unable to assure normal distributions in the test subjects. The statistical significance threshold for all tests was set at P = 0.05. Intersubject measures are quoted as <span class="ltx_text ltx_font_italic">median [interquartile range]</span>.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Results</h2>
+
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>The effect of repetitions</h3>
+
+<div id="S4.SS1.p1" class="ltx_para">
+<p class="ltx_p">From Table <a href="#S4.T1" title="Table 1 ‣ 4.1 The effect of repetitions ‣ 4 Results ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">1</span></span></a>, no significant differences were found between the distribution of errors for HA, E2A, and FA for all the pairs of strategies only containing First, Centre, First+1, and Last. There is, instead, a significant difference (P<math id="S4.SS1.p1.m1" class="ltx_Math" alttext="&lt;" display="inline"><mo>&lt;</mo></math>0.05) in distributions between the Random strategy compared to the other strategies for these metrics (with few non-significant exceptions for FA in 3BH and 5BH). When analysing the MD MAE errors, we found that the pairwise significance pattern we had observed for the other metrics does not hold and we did not recognise any clear pattern.</p>
+</div>
+<figure id="S4.T1" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Dataset</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Scheme</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt" colspan="5">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">HA MAAE</span><span class="ltx_text" style="font-size:80%;"></span>
+</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt" colspan="5">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">E2A MAAE</span><span class="ltx_text" style="font-size:80%;"></span>
+</td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" rowspan="5"><span class="ltx_text" style="font-size:80%;">1BH</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">First</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">25.69 [4.95]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">33.66 [4.77]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Centre</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">25.93 [5.26]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">33.86 [4.57]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Last</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">25.94 [4.91]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">33.87 [4.33]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">First+1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">25.69 [4.82]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">33.57 [4.70]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Random</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">26.60 [4.78]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">34.36 [4.48]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" rowspan="5"><span class="ltx_text" style="font-size:80%;">3BH</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">First</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">20.10 [4.62]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">28.13 [5.45]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Centre</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">20.12 [4.75]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">28.24 [5.04]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Last</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">20.23 [4.89]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">28.22 [4.94]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">First+1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">20.09 [4.63]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">28.23 [5.33]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Random</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">21.02 [4.74]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">29.03 [5.07]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" rowspan="5"><span class="ltx_text" style="font-size:80%;">5BH</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">First</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">13.90 [4.13]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">20.98 [5.28]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Centre</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">13.97 [4.08]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">21.02 [5.30]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Last</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.07 [4.05]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">20.89 [5.08]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">First+1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.06 [4.00]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">21.07 [5.27]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Random</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.68 [4.26]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">21.78 [5.51]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Dataset</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold" style="font-size:80%;">Scheme</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt" colspan="5">
+<span class="ltx_text ltx_font_bold" style="font-size:80%;">MD MAE (<math id="S4.T1.m1" class="ltx_Math" alttext="\times 10^{5}" display="inline"><mrow><mi></mi><mo mathvariant="normal">×</mo><msup><mn mathvariant="normal">10</mn><mn mathvariant="normal">5</mn></msup></mrow></math>)</span><span class="ltx_text" style="font-size:80%;"></span>
+</td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_tt" colspan="5"><span class="ltx_text ltx_font_bold" style="font-size:80%;">FA MAE (<math id="S4.T1.m2" class="ltx_Math" alttext="\times 10^{2}" display="inline"><mrow><mi></mi><mo mathvariant="normal">×</mo><msup><mn mathvariant="normal">10</mn><mn mathvariant="normal">2</mn></msup></mrow></math>)</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" rowspan="5"><span class="ltx_text" style="font-size:80%;">1BH</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">First</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">14.69 [5.51]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">19.50 [4.59]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Centre</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">15.75 [6.39]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">19.80 [4.72]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Last</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">15.58 [6.52]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">19.45 [4.82]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">First+1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.44 [5.30]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">19.50 [4.57]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Random</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">15.72 [6.52]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">20.41 [5.01]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" rowspan="5"><span class="ltx_text" style="font-size:80%;">3BH</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">First</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">9.76 [3.93]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">14.13 [3.92]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Centre</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9.63 [3.76]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">13.99 [4.04]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Last</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">10.12 [4.36]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.03 [3.72]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">First+1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9.64 [3.91]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.05 [3.92]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Random</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">8.85 [3.38]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">14.49 [4.05]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" rowspan="5"><span class="ltx_text" style="font-size:80%;">5BH</span></td>
+<td class="ltx_td ltx_align_left ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">First</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">6.24 [2.68]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r ltx_border_t" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">9.05 [3.05]</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_t" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Centre</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">6.32 [2.76]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">8.93 [3.02]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Last</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">6.50 [2.92]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">8.90 [2.96]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F1</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">First+1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">6.16 [2.69]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">8.90 [3.05]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">R</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_r"><span class="ltx_text" style="font-size:80%;">Random</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.86 [2.42]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center ltx_border_r" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">9.27 [2.85]</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#F4C7C3;"><span class="ltx_text" style="font-size:80%;background-color:#F4C7C3;">F</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">C</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">L</span></td>
+<td class="ltx_td ltx_align_center" style="background-color:#B7E1CD;"><span class="ltx_text" style="font-size:80%;background-color:#B7E1CD;">F1</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="5"><span class="ltx_text" style="font-size:80%;"></span></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 1: </span>MAAE and MAE for HA, E2A, MD and FA for the different sampling scheme choices compared to using all the available repetitions. We also report the statistical significance of comparing the distributions of pairs of repetitions strategies. This provides information on whether two repetitions-sampling strategies produce the same distribution of errors across our dataset or not. In this context, a green background signifies that we can reject the null hypothesis that the errors belong to the same distribution according to the Kolmogorov–Smirnov test.</figcaption>
+</figure>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Deep-learning-based de-noising</h3>
+
+<div id="S4.SS2.p1" class="ltx_para">
+<p class="ltx_p">We report the results of our experiments on tensor de-noising in Table <a href="#S4.T2" title="Table 2 ‣ 4.2.3 GAN Uformer and ensemble learning ‣ 4.2 Deep-learning-based de-noising ‣ 4 Results ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>.</p>
+</div>
+<section id="S4.SS2.SSS1" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.2.1 </span>Training additions</h4>
+
+<div id="S4.SS2.SSS1.p1" class="ltx_para">
+<p class="ltx_p">Channel normalisation brought an overall improvement compared to the baseline, especially when considering metrics computed from datasets with a higher number of repetitions. On the other hand, tensor-to-tensor training on its own appeared to be unstable, greatly benefiting some metrics while making some others worse (e.g., HA for 1BH compared to FA for 5BH) with no discernible pattern. By combining the two, we obtained a model that was more stable than one with T2T only but with slightly worse performance than using only CN. Nonetheless, T2T opened the doors to multi-tensor-to-tensor training, which brought a remarkable improvement to all metrics compared to a naive T2T approach.</p>
+</div>
+</section>
+<section id="S4.SS2.SSS2" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.2.2 </span>State-of-the-art models</h4>
+
+<div id="S4.SS2.SSS2.p1" class="ltx_para">
+<p class="ltx_p">Between the two explored SOTA models, Restomer consistently outperformed Uformer at the cost of a much longer and computationally-expensive training (13 hours vs 3 hours on our machine). For this reason, the Uformer was chosen for further exploration.</p>
+</div>
+</section>
+<section id="S4.SS2.SSS3" class="ltx_subsubsection">
+<h4 class="ltx_title ltx_title_subsubsection">
+<span class="ltx_tag ltx_tag_subsubsection">4.2.3 </span>GAN Uformer and ensemble learning</h4>
+
+<div id="S4.SS2.SSS3.p1" class="ltx_para">
+<p class="ltx_p">The addition of a discriminator and its associated loss to the training produced tensors that better encoded angular information but that encode scalar information marginally worse.</p>
+</div>
+<div id="S4.SS2.SSS3.p2" class="ltx_para">
+<p class="ltx_p">The best possible model given our training additions and architectural choices was produced by an ensemble of five Wasserstein GAN Uformer models (WGUFx5). Using even a naive bagging ensemble greatly improved all metrics for all datasets compared to using a single model.</p>
+</div>
+<div id="S4.SS2.SSS3.p3" class="ltx_para">
+<p class="ltx_p">All metrics except for MD for 1BH and MD for 5BH were significantly improved by our final model compared to the baseline (Wilcoxon signed-rank test, P<math id="S4.SS2.SSS3.p3.m1" class="ltx_Math" alttext="&lt;" display="inline"><mo>&lt;</mo></math>0.05). Our best performing model is the result of a naive bagging ensembling of five WGANUformer models (WGUFx5). The results show that even a naive bagging ensemble improves stability and validation performance, and reduces the variance of the output, all desirable properties in a medical setting.</p>
+</div>
+<figure id="S4.T2" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_th ltx_th_row ltx_border_r ltx_border_tt"></th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_tt"><span class="ltx_text ltx_font_bold">Model</span></th>
+<td class="ltx_td ltx_align_right ltx_border_tt"><span class="ltx_text ltx_font_bold">HA</span></td>
+<td class="ltx_td ltx_align_right ltx_border_tt"><span class="ltx_text ltx_font_bold">E2A</span></td>
+<td class="ltx_td ltx_align_right ltx_border_tt"><span class="ltx_text ltx_font_bold">MD (<math id="S4.T2.m1" class="ltx_Math" alttext="\times 10^{5}" display="inline"><mrow><mi></mi><mo mathvariant="normal">×</mo><msup><mn mathvariant="normal">10</mn><mn mathvariant="normal">5</mn></msup></mrow></math>)</span></td>
+<td class="ltx_td ltx_align_right ltx_border_tt"><span class="ltx_text ltx_font_bold">FA (<math id="S4.T2.m2" class="ltx_Math" alttext="\times 10^{2}" display="inline"><mrow><mi></mi><mo mathvariant="normal">×</mo><msup><mn mathvariant="normal">10</mn><mn mathvariant="normal">2</mn></msup></mrow></math>)</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t" rowspan="10">1BH</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">WGUFx5 + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 11.55 [4.45]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 21.790 Tr 0 w [7.28]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">6.45 [3.35]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">9.16 [4.32]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">WGUF + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right">12.03 [4.51]</td>
+<td class="ltx_td ltx_align_right">22.82 [8.61]</td>
+<td class="ltx_td ltx_align_right">7.12 [3.20]</td>
+<td class="ltx_td ltx_align_right">2 Tr 0.3 w 8.62 [3.71]0 Tr 0 w</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Restomer + CN +multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t">12.07 [4.85]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">22.88 [7.61]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">6.49 [3.35]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">9.70 [4.07]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">Uformer + CN +multi T2T</th>
+<td class="ltx_td ltx_align_right">12.18 [4.47]</td>
+<td class="ltx_td ltx_align_right">23.08 [6.27]</td>
+<td class="ltx_td ltx_align_right">6.52 [3.36]</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text ltx_framed_underline">8.91 [4.12]</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">BL + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_framed_underline">11.92 [4.30]</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_framed_underline">22.17 [7.18]</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t">6.44 [3.57]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">9.26 [4.04]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + CN + T2T</th>
+<td class="ltx_td ltx_align_right">12.73 [5.11]</td>
+<td class="ltx_td ltx_align_right">25.04 [8.38]</td>
+<td class="ltx_td ltx_align_right">6.16 [3.05]</td>
+<td class="ltx_td ltx_align_right">10.15 [4.73]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + T2T</th>
+<td class="ltx_td ltx_align_right">13.03 [4.74]</td>
+<td class="ltx_td ltx_align_right">26.16 [8.10]</td>
+<td class="ltx_td ltx_align_right">2 Tr 0.3 w 6.03 [3.03]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right">10.70 [4.86]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + ChanNorm</th>
+<td class="ltx_td ltx_align_right">13.60 [5.05]</td>
+<td class="ltx_td ltx_align_right">24.80 [8.94]</td>
+<td class="ltx_td ltx_align_right">6.30 [6.14]</td>
+<td class="ltx_td ltx_align_right">9.44 [3.99]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Baseline (BL)</th>
+<td class="ltx_td ltx_align_right ltx_border_t">13.86 [4.36]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">25.90 [7.69]</td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_framed_underline">6.14 [2.98]</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t">8.93 [3.45]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Least squares</th>
+<td class="ltx_td ltx_align_right ltx_border_t">20.80 [8.06]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">31.62 [7.00]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">11.40 [3.25]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">17.06 [4.65]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t" rowspan="10">3BH</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">WGUFx5 + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 10.05 [3.86]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 18.81 [6.04]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 5.02 [2.11]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right ltx_border_t">7.69 [3.72]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">WGUF + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right"><span class="ltx_text ltx_framed_underline">10.25 [4.21]</span></td>
+<td class="ltx_td ltx_align_right">19.56 [6.33]</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text ltx_framed_underline">5.31 [2.04]</span></td>
+<td class="ltx_td ltx_align_right">8.06 [3.57]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Restomer + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t">10.38 [4.11]</td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_framed_underline">19.41 [5.82]</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t">5.72 [2.04]</td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_framed_underline">7.48 [3.20]</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">Uformer + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right">10.42 [4.18]</td>
+<td class="ltx_td ltx_align_right">19.86 [7.13]</td>
+<td class="ltx_td ltx_align_right">5.43 [2.11]</td>
+<td class="ltx_td ltx_align_right">2 Tr 0.3 w 7.26 [3.36]0 Tr 0 w</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">BL + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t">10.73 [5.01]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">20.21 [6.92]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">5.57 [2.01]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">8.38 [3.19]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + CN + T2T</th>
+<td class="ltx_td ltx_align_right">11.33 [5.30]</td>
+<td class="ltx_td ltx_align_right">22.12 [7.84]</td>
+<td class="ltx_td ltx_align_right">5.54 [2.75]</td>
+<td class="ltx_td ltx_align_right">9.55 [5.17]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + T2T</th>
+<td class="ltx_td ltx_align_right">12.57 [5.65]</td>
+<td class="ltx_td ltx_align_right">22.46 [7.40]</td>
+<td class="ltx_td ltx_align_right">5.96 [2.53]</td>
+<td class="ltx_td ltx_align_right">10.09 [4.01]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + ChanNorm</th>
+<td class="ltx_td ltx_align_right">12.85 [4.90]</td>
+<td class="ltx_td ltx_align_right">21.62 [6.86]</td>
+<td class="ltx_td ltx_align_right">5.37 [1.93]</td>
+<td class="ltx_td ltx_align_right">8.57 [3.17]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Baseline (BL)</th>
+<td class="ltx_td ltx_align_right ltx_border_t">12.00 [5.25]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">24.34 [6.56]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">5.39 [1.78]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">8.35 [3.12]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Least squares</th>
+<td class="ltx_td ltx_align_right ltx_border_t">15.11 [7.56]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">23.85 [6.61]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">7.88 [3.39]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">12.09 [4.07]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_r ltx_border_t" rowspan="10">5BH</th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">WGUFx5 + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 8.39 [3.80]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 15.56 [6.46]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right ltx_border_t">4.67 [1.89]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 6.30 [2.85]0 Tr 0 w</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">WGUF + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right">8.54 [4.15]</td>
+<td class="ltx_td ltx_align_right">16.58 [6.07]</td>
+<td class="ltx_td ltx_align_right">4.53 [2.00]</td>
+<td class="ltx_td ltx_align_right">6.61 [3.11]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Restomer + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t">8.66 [3.82]</td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_framed_underline">15.57 [6.67]</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t">4.73 [1.81]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">6.79 [2.80]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">Uformer + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right">8.75 [4.03]</td>
+<td class="ltx_td ltx_align_right">16.07 [6.43]</td>
+<td class="ltx_td ltx_align_right">4.48 [1.75]</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text ltx_framed_underline">6.44 [2.48]</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">BL + CN + multi T2T</th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text ltx_framed_underline">8.45 [4.25]</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t">16.30 [6.99]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">4.79 [2.03]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">6.71 [2.79]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + CN + T2T</th>
+<td class="ltx_td ltx_align_right">9.54 [5.44]</td>
+<td class="ltx_td ltx_align_right">17.20 [7.34]</td>
+<td class="ltx_td ltx_align_right">5.71 [2.69]</td>
+<td class="ltx_td ltx_align_right">9.23 [3.91]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + T2T</th>
+<td class="ltx_td ltx_align_right">9.77 [4.90]</td>
+<td class="ltx_td ltx_align_right">17.77 [7.15]</td>
+<td class="ltx_td ltx_align_right">4.59 [1.80]</td>
+<td class="ltx_td ltx_align_right">7.78 [3.12]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r">BL + ChanNorm</th>
+<td class="ltx_td ltx_align_right">10.81 [4.11]</td>
+<td class="ltx_td ltx_align_right">18.92 [6.60]</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text ltx_framed_underline">4.16 [1.74]</span></td>
+<td class="ltx_td ltx_align_right">6.96 [2.43]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Baseline (BL)</th>
+<td class="ltx_td ltx_align_right ltx_border_t">10.94 [3.80]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">19.61 [5.37]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">2 Tr 0.3 w 4.11 [2.14]0 Tr 0 w</td>
+<td class="ltx_td ltx_align_right ltx_border_t">8.03 [3.34]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t">Least squares</th>
+<td class="ltx_td ltx_align_right ltx_border_t">9.79 [4.26]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">17.20 [5.51]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">6.10 [2.67]</td>
+<td class="ltx_td ltx_align_right ltx_border_t">8.30 [2.93]</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_tt" colspan="5"></th>
+<td class="ltx_td ltx_border_tt"></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 2: </span>DT-CMR maps errors for all the deep-learning models we experiment with. The table is divided into three sections, one per dataset (1BH, 3BH, 5BH) and also include the error for the linear approximation method of the maps (Least squares). In bold and underlined we report, respectively, the best and second best results for each metric and dataset.</figcaption>
+</figure>
+</section>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Discussion</h2>
+
+<section id="S5.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.1 </span>Breath-hold choice</h3>
+
+<div id="S5.SS1.p1" class="ltx_para">
+<p class="ltx_p">From our results on the breath-hold repetition sampling patterns, we can draw several conclusions on how the patient behaviour affects the quality of the maps:
+</p>
+<ul id="S5.I1" class="ltx_itemize">
+<li id="S5.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i1.p1" class="ltx_para">
+<p class="ltx_p">Despite the clinician’s intuition, no significant conclusion can be drawn about the difference in errors between the First and the First+1 protocols.</p>
+</div>
+</li>
+<li id="S5.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i2.p1" class="ltx_para">
+<p class="ltx_p">There is no clear pattern for the pairwise significance of the results within a dataset, suggesting that there are other factors that affect the quality of the maps besides the sampling pattern.</p>
+</div>
+</li>
+<li id="S5.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I1.i3.p1" class="ltx_para">
+<p class="ltx_p">Lower numbers of breath-holds produce far fewer significant results compared to higher-breath-holds datasets (44/80 for BH1, 46/80 for BH3 and 48/80 for BH5). This can be attributed to the higher variability of errors due to the effect of the singular bad acquisition on the final quality of the maps. Such effect is instead smoothed out when considering the maps produced from a larger number of repetitions, making the error distributions more similar to each other.</p>
+</div>
+</li>
+</ul>
+<p class="ltx_p">Keeping the statistical significance in mind, First, Centre, or Last sampling strategies seem a reasonable choice as they have lower error and no significant difference in error distributions. The exception is for MD, for which the difference is sometimes significant. For this reason, we decided to train our models on the First, Centre, and Last strategies, but to only use the First strategy for the validation and test sets. Notice that the data acquired with the First+1 strategy was not used for the training as it contains a considerable amount of redundancy with that acquired with the First scheme. This also mirrors a real clinical acquisition situation, where choosing the first M repetitions is the shortest option in terms of the number of breath-holds for the patient. Any other strategy would require us to acquire and discard some data, which is not feasible in a clinical setting where the aim is to minimise the scan time for the patient.</p>
+</div>
+</section>
+<section id="S5.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">5.2 </span>Deep-learning-based de-noising</h3>
+
+<div id="S5.SS2.p1" class="ltx_para">
+<p class="ltx_p">Our proposed additions to the training (channel normalisation, tensor-to-tensor training and multi-tensor-to-tensor training) have a beneficial effect if we consider the errors on the DT-CMR derived maps. This is due to various reasons:</p>
+<ul id="S5.I2" class="ltx_itemize">
+<li id="S5.I2.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I2.i1.p1" class="ltx_para">
+<p class="ltx_p">Channel normalisation simplifies the training, allowing the network to not focus on rescaling the output to match the input range for each channel individually.</p>
+</div>
+</li>
+<li id="S5.I2.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I2.i2.p1" class="ltx_para">
+<p class="ltx_p">Tensor-to-tensor training completely changes the training objective. In our previous work, we had trained a model to compute de-noised tensors from noisy images, effectively replacing the linear optimisation problem (LSS). This corresponds to training the model on two tasks simultaneously: de-noising and tensor computation, making the overall convergence harder. In our new proposed setting, we simplify the training objective by removing the tensor-computation aspect and only leaving the de-noising part of the training. Moreover, this allowed us to make use of the existing literature in the well-studied field of image de-noising, while our previous approach (image-to-tensor) proposed a model for a completely novel task with no existing literature.</p>
+</div>
+</li>
+<li id="S5.I2.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S5.I2.i3.p1" class="ltx_para">
+<p class="ltx_p">Making use of multiple sampling patterns from our available data also gave us an advantage over previous work by allowing us to greatly increase the size of the dataset used for the training without the need to scan additional patients. </p>
+</div>
+</li>
+</ul>
+<p class="ltx_p">Our final model, WGUFx5, draws from the SOTA in camera images de-noising uses several novel blocks to encode local information by using local self-attention and hierarchical feature encoding. All these additions produce a definite improvement in our tensor de-noising task.</p>
+</div>
+<div id="S5.SS2.p2" class="ltx_para">
+<p class="ltx_p">Finally, according to the literature, a bagging ensemble reduces the variance of the prediction and therefore suggests that previous models were inadvertently overfitting to the training set, despite our efforts to prevent it. The ensemble strategy in our setting can be therefore interpreted to act as a regulariser.</p>
+</div>
+</section>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Conclusion</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p class="ltx_p">DT-CMR has the potential to revolutionise the ability to non-invasively image and assess the microstructural organisation of the myocardium underlying cardiac pathology, but it is held back from clinical translation by its long acquisition times. Here, we proposed to tackle the problem by reducing the number of repetitions used in a classical DT-CMR acquisition protocol, which linearly reduced the total acquisition time, but also decreased SNR. When choosing the repetition selection scheme, we demonstrated that the choice of breath-hold had no statistically significant effect on the final quality of the DT-CMR maps.
+We also proposed several improvements on existing deep learning models, that, combined, may lead to a significant and considerable step towards single-breath-hold DT-CMR acquisition for clinical use.</p>
+</div>
+<div class="ltx_pagination ltx_role_newpage"></div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[1]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Arjovsky, S. Chintala, and L. Bottou</span><span class="ltx_text ltx_bib_year"> (2017-12)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Wasserstein GAN</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1701.07875 [cs, stat]</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">1701.07875</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS4.SSS2.p5" title="3.4.2 Model ‣ 3.4 Deep-learning-based de-noising ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.4.2</span></a>.
+</span>
+</li>
+<li id="bib.bib144" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[2]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">P. J. Basser</span><span class="ltx_text ltx_bib_year"> (1995)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Inferring microstructural features and the physiological state of tissues from diffusion-weighted images</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">NMR in Biomedicine</span> <span class="ltx_text ltx_bib_volume">8</span> (<span class="ltx_text ltx_bib_number">7</span>), <span class="ltx_text ltx_bib_pages"> pp. 333–344</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p3" title="2.1 DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[3]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Batson and L. Royer</span><span class="ltx_text ltx_bib_year"> (2019-05)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Noise2Self: Blind Denoising by Self-Supervision</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the 36th International Conference on Machine Learning</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 524–533</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 2640-3498</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[4]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">H. Chen, Y. Wang, T. Guo, C. Xu, Y. Deng, Z. Liu, S. Ma, C. Xu, C. Xu, and W. Gao</span><span class="ltx_text ltx_bib_year"> (2021-06)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Pre-Trained Image Processing Transformer</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">2021 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_place">Nashville, TN, USA</span>, <span class="ltx_text ltx_bib_pages"> pp. 12294–12305</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1109/CVPR46437.2021.01212" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text isbn ltx_bib_external">ISBN 978-1-66544-509-2</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[5]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">H. Chen, Y. Zhang, W. Zhang, P. Liao, K. Li, J. Zhou, and G. Wang</span><span class="ltx_text ltx_bib_year"> (2017-04)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Low-dose CT denoising with convolutional neural network</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">2017 IEEE 14th International Symposium on Biomedical Imaging (ISBI 2017)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 143–146</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1945-8452</span>,
+<a href="https://dx.doi.org/10.1109/ISBI.2017.7950488" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib46" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[6]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">Q. Collier, J. Veraart, B. Jeurissen, A. J. den Dekker, and J. Sijbers</span><span class="ltx_text ltx_bib_year"> (2015)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Iterative reweighted linear least squares for accurate, fast, and robust estimation of diffusion magnetic resonance parameters</span>.
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">73</span>,  <span class="ltx_text ltx_bib_publisher">Wiley Online Library</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p2" title="2.1 DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[7]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">U. Demir and G. Unal</span><span class="ltx_text ltx_bib_year"> (2018-03)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Patch-Based Image Inpainting with Generative Adversarial Networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1803.07422 [cs]</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">1803.07422</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS4.SSS2.p5" title="3.4.2 Model ‣ 3.4 Deep-learning-based de-noising ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.4.2</span></a>.
+</span>
+</li>
+<li id="bib.bib34" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[8]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Guizar-Sicairos, S. T. Thurman, and J. R. Fienup</span><span class="ltx_text ltx_bib_year"> (2008-01)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Efficient subpixel image registration algorithms</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Optics Letters</span> <span class="ltx_text ltx_bib_volume">33</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 156–158</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1539-4794</span>,
+<a href="https://dx.doi.org/10.1364/OL.33.000156" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS2.p1" title="3.2 Data preparation ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.2</span></a>.
+</span>
+</li>
+<li id="bib.bib38" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[9]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">P. Hermosilla, T. Ritschel, and T. Ropinski</span><span class="ltx_text ltx_bib_year"> (2019)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Total Denoising: Unsupervised Learning of 3D Point Cloud Cleaning</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Proceedings of the IEEE/CVF International Conference on Computer Vision</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_pages"> pp. 52–60</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib49" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[10]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">D. Jiang, W. Dou, L. Vosters, X. Xu, Y. Sun, and T. Tan</span><span class="ltx_text ltx_bib_year"> (2018-09)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Denoising of 3D magnetic resonance images with multi-channel residual learning of convolutional neural network</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Japanese Journal of Radiology</span> <span class="ltx_text ltx_bib_volume">36</span> (<span class="ltx_text ltx_bib_number">9</span>), <span class="ltx_text ltx_bib_pages"> pp. 566–574</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1867-108X</span>,
+<a href="https://dx.doi.org/10.1007/s11604-018-0758-8" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib42" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[11]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">P. B. Kingsley</span><span class="ltx_text ltx_bib_year"> (2006)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Introduction to diffusion tensor imaging mathematics: Part III. Tensor calculation, noise, simulations, and optimization</span>.
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">28</span>,  <span class="ltx_text ltx_bib_publisher">Wiley Online Library</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p2" title="2.1 DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S3.SS2.p2" title="3.2 Data preparation ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.2</span></a>.
+</span>
+</li>
+<li id="bib.bib143" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[12]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">G. L. Kung, T. C. Nguyen, A. Itoh, S. Skare, N. B. Ingels Jr, D. C. Miller, and D. B. Ennis</span><span class="ltx_text ltx_bib_year"> (2011)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The presence of two local myocardial sheet populations confirmed by diffusion tensor mri and histological validation</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Magnetic Resonance Imaging</span> <span class="ltx_text ltx_bib_volume">34</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 1080–1091</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p3" title="2.1 DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib73" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[13]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Liang, J. Cao, G. Sun, K. Zhang, L. Van Gool, and R. Timofte</span><span class="ltx_text ltx_bib_year"> (2021-10)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">SwinIR: Image Restoration Using Swin Transformer</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">2021 IEEE/CVF International Conference on Computer Vision Workshops (ICCVW)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_place">Montreal, BC, Canada</span>, <span class="ltx_text ltx_bib_pages"> pp. 1833–1844</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1109/ICCVW54120.2021.00210" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text isbn ltx_bib_external">ISBN 978-1-66540-191-3</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib78" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[14]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">I. Loshchilov and F. Hutter</span><span class="ltx_text ltx_bib_year"> (2019-01)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Decoupled Weight Decay Regularization</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1711.05101 [cs, math]</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">1711.05101</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS4.SSS3.p2" title="3.4.3 Training ‣ 3.4 Deep-learning-based de-noising ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib80" class="ltx_bibitem ltx_bib_incollection">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[15]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. V. Manjón and P. Coupe</span><span class="ltx_text ltx_bib_year"> (2018)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">MRI Denoising Using Deep Learning</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Patch-Based Techniques in Medical Imaging</span>,  <span class="ltx_text ltx_bib_editor">W. Bai, G. Sanroma, G. Wu, B. C. Munsell, Y. Zhan, and P. Coupé (Eds.)</span>,
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">11075</span>, <span class="ltx_text ltx_bib_pages"> pp. 12–19</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1007/978-3-030-00500-9" title="" class="ltx_ref doi ltx_bib_external">Document</a>,
+<span class="ltx_text isbn ltx_bib_external">ISBN 978-3-030-00499-6 978-3-030-00500-9</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib88" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[16]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">S. Mori and J. Zhang</span><span class="ltx_text ltx_bib_year"> (2006-09)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Principles of Diffusion Tensor Imaging and Its Applications to Basic Neuroscience Research</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Neuron</span> <span class="ltx_text ltx_bib_volume">51</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 527–539</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0896-6273</span>,
+<a href="https://dx.doi.org/10.1016/j.neuron.2006.08.012" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib93" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[17]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">H. S. Park, J. Baek, S. K. You, J. K. Choi, and J. K. Seo</span><span class="ltx_text ltx_bib_year"> (2019)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Unpaired Image Denoising Using a Generative Adversarial Network in X-Ray CT</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">IEEE Access</span> <span class="ltx_text ltx_bib_volume">7</span>, <span class="ltx_text ltx_bib_pages"> pp. 110414–110425</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 2169-3536</span>,
+<a href="https://dx.doi.org/10.1109/ACCESS.2019.2934178" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib94" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[18]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">K. Phipps, M. van de Boomen, R. Eder, S. A. Michelhaugh, A. Spahillari, J. Kim, S. Parajuli, T. G. Reese, C. Mekkaoui, S. Das, D. Gee, R. Shah, D. E. Sosnovik, and C. Nguyen</span><span class="ltx_text ltx_bib_year"> (2021-06)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Accelerated in Vivo Cardiac Diffusion-Tensor MRI Using Residual Deep Learning–based Denoising in Participants with Obesity</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Radiology: Cardiothoracic Imaging</span> <span class="ltx_text ltx_bib_volume">3</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. e200580</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://dx.doi.org/10.1148/ryct.2021200580" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p3" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib104" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[19]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. D. Schlaudecker and C. R. Bernheisel</span><span class="ltx_text ltx_bib_year"> (2009-10)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Gadolinium-Associated Nephrogenic Systemic Fibrosis</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">American Family Physician</span> <span class="ltx_text ltx_bib_volume">80</span> (<span class="ltx_text ltx_bib_number">7</span>), <span class="ltx_text ltx_bib_pages"> pp. 711–714</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0002-838X, 1532-0650</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib127" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[20]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">Z. Wang, X. Cun, J. Bao, W. Zhou, J. Liu, and H. Li</span><span class="ltx_text ltx_bib_year"> (2021-11)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Uformer: A General U-Shaped Transformer for Image Restoration</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:2106.03106 [cs]</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2106.03106</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S3.SS4.SSS2.p3" title="3.4.2 Model ‣ 3.4 Deep-learning-based de-noising ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.4.2</span></a>.
+</span>
+</li>
+<li id="bib.bib141" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[21]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">X. X</span><span class="ltx_text ltx_bib_year"> (2022)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">This work has been accepted to jmri 2022 but it is not publicly available. all the information has been anonymised.</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">X</span>,
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p3" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib142" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[22]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">X,X</span><span class="ltx_text ltx_bib_year"> (20XX)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Previous work by our research group. All the information has been anonymised.</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">X</span>,
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS2.p1" title="3.2 Data preparation ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.2</span></a>.
+</span>
+</li>
+<li id="bib.bib131" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[23]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Xie, L. Xu, and C. Enhong</span><span class="ltx_text ltx_bib_year"> (2012)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Image Denoising and Inpainting with Deep Neural Networks</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Advances in Neural Information Processing Systems</span>,
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">3</span>, <span class="ltx_text ltx_bib_pages"> pp. 183–189</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib137" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[24]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">S. W. Zamir, A. Arora, S. Khan, M. Hayat, F. S. Khan, and M. Yang</span><span class="ltx_text ltx_bib_year"> (2021-11)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Restormer: Efficient Transformer for High-Resolution Image Restoration</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:2111.09881 [cs]</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2111.09881</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>,
+<a href="#S3.SS4.SSS2.p3" title="3.4.2 Model ‣ 3.4 Deep-learning-based de-noising ‣ 3 Methods ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.4.2</span></a>.
+</span>
+</li>
+<li id="bib.bib138" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[25]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">K. Zhang, W. Zuo, Y. Chen, D. Meng, and L. Zhang</span><span class="ltx_text ltx_bib_year"> (2017-07)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Beyond a Gaussian Denoiser: Residual Learning of Deep CNN for Image Denoising</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">IEEE Transactions on Image Processing</span> <span class="ltx_text ltx_bib_volume">26</span> (<span class="ltx_text ltx_bib_number">7</span>), <span class="ltx_text ltx_bib_pages"> pp. 3142–3155</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1941-0042</span>,
+<a href="https://dx.doi.org/10.1109/TIP.2017.2662206" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 De-noising in DT-CMR ‣ 2 Background ‣ Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reductionThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+</ul>
+</section>
+<div class="ltx_pagination ltx_role_newpage"></div>
+</article>
+</div>
+<footer class="ltx_page_footer">
+<div class="ltx_page_logo">Generated  on Thu Sep 28 17:18:43 2023 by <a href="http://dlmf.nist.gov/LaTeXML/">LaTeXML <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="[LOGO]"></a>
+</div></footer>
+</div>
+</body>
+</html>

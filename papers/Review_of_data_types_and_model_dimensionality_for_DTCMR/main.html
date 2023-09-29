@@ -1,0 +1,1207 @@
+<!DOCTYPE html><html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1).</title>
+<!--Generated on Thu Sep 28 17:01:05 2023 by LaTeXML (version 0.8.6) http://dlmf.nist.gov/LaTeXML/.-->
+
+<link rel="stylesheet" href="../ar5iv.0.7.7.min.css" type="text/css">
+<link rel="stylesheet" href="../ar5iv-site.0.2.1.css" type="text/css">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="keywords" lang="en" content="MRI Deep Learning Diffusion Tensor Imaging Cardiac MRI">
+
+<script>
+    function detectColorScheme(){
+        var theme="light";
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if(current_theme){
+            if(current_theme == "dark"){
+                theme = "dark";
+            } }
+        else if(!window.matchMedia) { return false; }
+        else if(window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark"; }
+        if (theme=="dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+            document.documentElement.setAttribute("data-theme", "light"); } }
+
+    detectColorScheme();
+
+    function toggleColorScheme(){
+        var current_theme = localStorage.getItem("ar5iv_theme");
+        if (current_theme) {
+            if (current_theme == "light") {
+                localStorage.setItem("ar5iv_theme", "dark"); }
+            else {
+                localStorage.setItem("ar5iv_theme", "light"); } }
+        else {
+            localStorage.setItem("ar5iv_theme", "dark"); }
+        detectColorScheme(); }
+
+    function changeTableColoursColorscheme() {
+        console.log("test")
+        if (document.documentElement.getAttribute("data-theme") === "dark") {
+            // wait until table is loaded, keep checking every 100ms
+            var check1 = setInterval(function() {
+                if (document.getElementById("S4.T2")) {
+                    clearInterval(check1);
+                    changeTableColoursColorschemeDark("S4.T2"); }
+                }, 100);
+            var check2 = setInterval(function() {
+                if (document.getElementById("S4.T3")) {
+                    clearInterval(check2);
+                    changeTableColoursColorschemeDark("S4.T3"); }
+            }, 100);
+        }
+    }
+
+    function changeTableColoursColorschemeDark(table_id) {
+        var table = document.getElementById(table_id);
+        console.log(table);
+        var rows = table.getElementsByTagName("tr");
+        console.log(rows);
+        for (i = 0; i < rows.length; i++) {
+            var cols = rows[i].getElementsByTagName("td");
+            for (j = 0; j < cols.length; j++) {
+                let current_colour = cols[j].style.backgroundColor;
+                // compute dark version of the same colour
+                let current_colour_rgb = current_colour.match(/\d+/g);
+
+                if (current_colour_rgb == null) {
+                    continue;
+                }
+
+                let new_colour_rgb = darkenColor(current_colour_rgb, 0.7);
+                console.log(new_colour_rgb);
+                let new_colour = "rgb(" + new_colour_rgb[0] + "," + new_colour_rgb[1] + "," + new_colour_rgb[2] + ")";
+
+                cols[j].style.backgroundColor = new_colour;
+                // cols[j].style.color = "#f8f8f8";
+                cols[j].children[0].style.backgroundColor = new_colour;
+            }
+        }
+    }
+
+    // Function to darken an RGB color
+    function darkenColor(rgb, factor) {
+        // Parse the RGB components
+        const r = rgb[0] / 255;
+        const g = rgb[1] / 255;
+        const b = rgb[2] / 255;
+
+        // Convert RGB to HSL
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+
+        // Darken the color by reducing the lightness
+        l -= l * factor;
+
+        // Convert HSL back to RGB
+        let c = (1 - Math.abs(2 * l - 1)) * s;
+        let x = c * (1 - Math.abs((h * 6) % 2 - 1));
+        let m = l - c / 2;
+
+        let r2, g2, b2;
+        if (h < 1/6) {
+            r2 = c;
+            g2 = x;
+            b2 = 0;
+        } else if (h < 1/3) {
+            r2 = x;
+            g2 = c;
+            b2 = 0;
+        } else if (h < 1/2) {
+            r2 = 0;
+            g2 = c;
+            b2 = x;
+        } else if (h < 2/3) {
+            r2 = 0;
+            g2 = x;
+            b2 = c;
+        } else if (h < 5/6) {
+            r2 = x;
+            g2 = 0;
+            b2 = c;
+        } else {
+            r2 = c;
+            g2 = 0;
+            b2 = x;
+        }
+
+        r3 = (r2 + m) * 255;
+        g3 = (g2 + m) * 255;
+        b3 = (b2 + m) * 255;
+
+        return [Math.round(r3), Math.round(g3), Math.round(b3)];
+    }
+
+    changeTableColoursColorscheme();
+</script>
+
+<style>
+    b { font-weight: 1000; }
+</style>
+
+</head>
+<body>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_title_document">Review of data types and model dimensionality for cardiac DTI SMS-related artefact removal<span class="ltx_note ltx_role_thanks"><sup class="ltx_note_mark">†</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">†</sup><span class="ltx_note_type">thanks: </span>This work was supported in part by the UKRI CDT in AI for Healthcare <a href="http://ai4health.io" title="" class="ltx_ref">http://ai4health.io</a> (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1).</span></span></span>
+</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Michael Tänzer
+</span><span class="ltx_author_notes"><span>Imperial College London</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">Sea Hee Yook
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+<br class="ltx_break">Pedro Ferreira
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+<br class="ltx_break">Guang Yang
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+<br class="ltx_break">Daniel Rueckert
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Klinikum rechts der Isar, Technische Universität München (TUM)</span></span></span>
+<span class="ltx_author_before">  </span><span class="ltx_creator ltx_role_author">
+<span class="ltx_personname">
+<br class="ltx_break">Sonia Nielles-Vallespin
+</span><span class="ltx_author_notes"><span>Imperial College London <br>Royal Brompton and Harefield hospital</span></span></span>
+</div>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+    
+<p class="ltx_p">As diffusion tensor imaging (DTI) gains popularity in cardiac imaging due to its unique ability to non-invasively assess the cardiac microstructure, deep learning-based Artificial Intelligence is becoming a crucial tool in mitigating some of its drawbacks, such as the long scan times. As it often happens in fast-paced research environments, a lot of emphasis has been put on showing the capability of deep learning while often not enough time has been spent investigating what input and architectural properties would benefit cardiac DTI acceleration the most. In this work, we compare the effect of several input types (magnitude images vs complex images), multiple dimensionalities (2D vs 3D operations), and multiple input types (single slice vs multi-slice) on the performance of a model trained to remove artefacts caused by a simultaneous multi-slice (SMS) acquisition. Despite our initial intuition, our experiments show that, for a fixed number of parameters, simpler 2D real-valued models outperform their more advanced 3D or complex counterparts. The best performance is although obtained by a real-valued model trained using both the magnitude and phase components of the acquired data. We believe this behaviour to be due to real-valued models making better use of the lower number of parameters, and to 3D models not being able to exploit the spatial information because of the low SMS acceleration factor used in our experiments.</p>
+  
+</div>
+<div class="ltx_keywords">
+<h6 class="ltx_title ltx_title_keywords">Keywords: </h6>MRI Deep Learning Diffusion Tensor Imaging Cardiac MRI
+</div>
+<div id="p1" class="ltx_para">
+<p class="ltx_p"><span class="ltx_text ltx_ulem_uline"></span>
+
+
+
+</p>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para">
+<p class="ltx_p">Cardiac diffusion tensor imaging is growing as a novel imaging modality as it is capable of interrogating the microstructure of the beating heart with no invasive surgery and without the use of any contrast agent <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib131" title="Principles of Diffusion Tensor Imaging and Its Applications to Basic Neuroscience Research" class="ltx_ref">11</a>]</cite>, making it accessible for patients with reduced kidney functionality <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib130" title="Gadolinium-Associated Nephrogenic Systemic Fibrosis" class="ltx_ref">17</a>]</cite> or for frequent scans. In clinical research studies, cardiac DTI has been shown to be useful in phenotyping several cardiomyopathies such as hypertrophic cardiomyopathy (HCM) and dilated cardiomyopathy (DCM) by quantitatively analysing the microstructural organisation and orientation of cardiomyocytes within the myocardium.
+</p>
+</div>
+<div id="S1.p2" class="ltx_para">
+<p class="ltx_p">As cardiac DTI is becoming more and more studied, the use of deep learning-based (DL) approaches applied to it is similarly increasing <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib52" title="Accelerated in Vivo Cardiac Diffusion-Tensor MRI Using Residual Deep Learning–based Denoising in Participants with Obesity" class="ltx_ref">14</a>, <a href="#bib.bib173" title="Stochastic Deep Compressive Sensing for the Reconstruction of Diffusion Tensor Cardiac MRI" class="ltx_ref">18</a>, <a href="#bib.bib166" title="Automating in vivo cardiac diffusion tensor postprocessing with deep learning–based segmentation" class="ltx_ref">6</a>, <a href="#bib.bib174" title="Accelerating Cardiac Diffusion Tensor Imaging With a U-Net Based Model: Toward Single Breath-Hold" class="ltx_ref">5</a>, <a href="#bib.bib175" title="Diffusion tensor estimation with transformer neural networks" class="ltx_ref">8</a>, <a href="#bib.bib176" title="Synthetically trained convolutional neural networks for improved tensor estimation from free-breathing cardiac DTI" class="ltx_ref">22</a>, <a href="#bib.bib177" title="CS-GAN for High-Quality Diffusion Tensor Imaging" class="ltx_ref">4</a>, <a href="#bib.bib183" title="Faster Diffusion Cardiac MRI with Deep Learning-Based Breath Hold Reduction" class="ltx_ref">20</a>]</cite>. Most of the recent work in the field, although, suffer from a common crucial shortcoming: in order to quickly show the potential of deep learning on improving cardiac DTI, many publications don’t go beyond applying some well-known general-purpose architecture to the data they have available, often ignoring inherent properties of the acquisition method. As an example, in much of the recently published work, we find a widespread use of out-of-the-box models such as the popular U-Net <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib5" title="U-Net: Convolutional Networks for Biomedical Image Segmentation" class="ltx_ref">16</a>]</cite>, which is a 2D model designed for real data. MRI data, on the other hand, is complex by definition and the subject of the acquisition is often 3D rather than 2D, making the standard U-Net ill-fitting for the task.</p>
+</div>
+<div id="S1.p3" class="ltx_para">
+<p class="ltx_p">In this work, we compare the effect of making relatively small architectural changes to the popular U-Net model when applied to a general image-to-image task in DTI. Specifically, we choose the task of removing artefacts from cardiac DTI images acquired with an SMS protocol, and we compare the classic 2D magnitude-only U-Net with 3D and complex versions of the same model, with the goal of providing future researchers with a better starting point for their experimental work. To this end, we also make the code for all of our tested models available on GitHub<span id="footnote1" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup>
+            <span class="ltx_tag ltx_tag_note">1</span>
+            
+            
+          <a href="https://github.com/Michael-Tanzer/architectures-tanzer-stacom22" title="" class="ltx_ref">https://github.com/Michael-Tanzer/architectures-tanzer-stacom22</a></span></span></span>.</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Background</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Cardiac diffusion tensor imaging</h3>
+
+<div id="S2.SS1.p1" class="ltx_para">
+<p class="ltx_p">Diffusion tensor imaging measures the diffusion of water molecules for every voxel in the imaged tissue and approximates as a 3D tensor. As the free diffusion of water in the tissue is constrained by the shape of cardiac muscle microstructure, studying such tensors has been shown to give us information related to the shape and orientation of the cardiomyocytes in the imaged tissues.</p>
+</div>
+<div id="S2.SS1.p2" class="ltx_para">
+<p class="ltx_p">The cardiac diffusion tensor information is commonly visualised and quantified through four per-voxel metric maps: Mean Diffusivity (MD) that quantifies the total diffusion in the voxel (higher corresponds to more diffusion), Fractional Anisotropy (FA) that quantifies the level of organisation of the tissue (higher corresponds to a higher organisation), Helix Angle (HA) and Second Eigenvector (E2) Angle (E2A) that quantify the 3D orientation and shape of the tissue in the voxel <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib181" title="Inferring microstructural features and the physiological state of tissues from diffusion-weighted images" class="ltx_ref">2</a>, <a href="#bib.bib180" title="The presence of two local myocardial sheet populations confirmed by diffusion tensor mri and histological validation" class="ltx_ref">10</a>]</cite>. These maps have been shown to be a promising tool for phenotyping many cardiac pathology in a clinical setting <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib123" title="Diffusion tensor imaging: Concepts and applications" class="ltx_ref">3</a>, <a href="#bib.bib33" title="Cardiac Diffusion: Technique and Practical Applications" class="ltx_ref">13</a>, <a href="#bib.bib46" title="Assessment of Myocardial Microstructural Dynamics by In Vivo Diffusion Tensor Cardiac Magnetic Resonance" class="ltx_ref">12</a>]</cite>.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Simultaneous multi-slice acquisition (SMS)</h3>
+
+<div id="S2.SS2.p1" class="ltx_para">
+<p class="ltx_p">Simultaneous multi-slice techniques have been used with great success to reduce the acquisition time in brain diffusion tensor imaging (DTI) <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib41" title="Improving diffusion MRI using simultaneous multi-slice echo planar imaging" class="ltx_ref">19</a>]</cite>. SMS uses a multi-band excitation pulse to simultaneously excite several 2D slices within the imaged tissue. In SMS, each receiver coil collects a single frequency-domain image for all the excited slices, the signal received is a weighted sum of the signals that would be emitted by exciting each slice individually.</p>
+</div>
+<div id="S2.SS2.p2" class="ltx_para">
+<p class="ltx_p">By making use of the redundant information from the receiver coils that surround the tissue we want to image, we can then separate the signal from the excited slices using modified versions of the GRAPPA <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib133" title="Generalized autocalibrating partially parallel acquisitions (GRAPPA)" class="ltx_ref">7</a>]</cite> and SENSE <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib132" title="SENSE: sensitivity encoding for fast MRI" class="ltx_ref">15</a>]</cite> algorithms used for in-plane acceleration. Unfortunately, as the information is often insufficient and as the problem is not fully characterised, the slice separation algorithms introduce artefacts in the separated slices <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib25" title="Simultaneous multislice (SMS) imaging techniques" class="ltx_ref">1</a>]</cite>. The artefacts are often referred to as interslice-leakage artefact as they arise when information from one slice erroneously ends up on a different slice. Because of the disposition in space of the MRI coils, the leakage between two slices is more evident when the slices are closer in the imaged tissue.</p>
+</div>
+</section>
+<section id="S2.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.3 </span>Deep learning in DTI</h3>
+
+<div id="S2.SS3.p1" class="ltx_para">
+<p class="ltx_p">As cardiac DTI grows in popularity, a lot of work has been published trying to improve the acquisition quality or trying to shorten its long scan-times. Among others, Ferreira et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib174" title="Accelerating Cardiac Diffusion Tensor Imaging With a U-Net Based Model: Toward Single Breath-Hold" class="ltx_ref">5</a>]</cite>, Tänzer et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib183" title="Faster Diffusion Cardiac MRI with Deep Learning-Based Breath Hold Reduction" class="ltx_ref">20</a>]</cite>, and Phipps et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib52" title="Accelerated in Vivo Cardiac Diffusion-Tensor MRI Using Residual Deep Learning–based Denoising in Participants with Obesity" class="ltx_ref">14</a>]</cite> reduced the number of repetitions needed to increase the low SNR by using a de-noising framework to restore high image quality from less acquired data. Schlemper et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib173" title="Stochastic Deep Compressive Sensing for the Reconstruction of Diffusion Tensor Cardiac MRI" class="ltx_ref">18</a>]</cite> applied a cascade of convolutional neural networks to fill-in k-space entries acquired with a compressed sensing protocol, further reducing the scan times.</p>
+</div>
+<div id="S2.SS3.p2" class="ltx_para">
+<p class="ltx_p">Ferreira et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib166" title="Automating in vivo cardiac diffusion tensor postprocessing with deep learning–based segmentation" class="ltx_ref">6</a>]</cite> propose a U-Net for the segmentation of the left ventricle, automating part of the DTI maps computation, Cao et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib177" title="CS-GAN for High-Quality Diffusion Tensor Imaging" class="ltx_ref">4</a>]</cite> show how a GAN model can be used as a de-aliasing model for DTI, and Tian et al. <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib14" title="Deep Learning on Image Denoising: An overview" class="ltx_ref">21</a>]</cite> work on self-supervised DTI de-noising is also based on a modified U-Net model.</p>
+</div>
+<div id="S2.SS3.p3" class="ltx_para">
+<p class="ltx_p">Most of the examples reported above, despite all being a great contribution to the field of deep-learning-accelerated cardiac DTI, have a 2D real-valued U-Net model at their core. This shows that the choice of data type and dimensionality is not the top priority of many influential publications.</p>
+</div>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span>Methods</h2>
+
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>Complex neural networks</h3>
+
+<div id="S3.SS1.p1" class="ltx_para">
+<p class="ltx_p">As MRI data is inherently complex, we explore the possibility of training using complex data. Traditionally, there are two main ways to achieve this: separating the complex data into non-complex components, or using a model that performs complex operations.</p>
+</div>
+<div id="S3.SS1.p2" class="ltx_para">
+<p class="ltx_p">The former is a more straight-forward approach: the complex data is split into its real and imaginary components or into magnitude and phase and then a real-values model is trained using the split data. This can be done in multiple ways: either by treating the components as different channels, or by training two separate models, one for each component. In our comparison we split the data in magnitude and phase as they are more meaningful in the physics of MRI and we use them as separate input channels to a unified model.</p>
+</div>
+<div id="S3.SS1.p3" class="ltx_para">
+<p class="ltx_p">The latter option requires more thinking: while some operations naturally extend to the complex domain, some others do not and need to be re-designed. We report the main changes to the used operators in Table <a href="#S3.T1" title="Table 1 ‣ 3.1 Complex neural networks ‣ 3 Methods ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">1</span></span></a>. In the table <math id="S3.SS1.p3.m1" class="ltx_Math" alttext="z=a+ib" display="inline"><mrow><mi>z</mi><mo>=</mo><mrow><mi>a</mi><mo>+</mo><mrow><mi>i</mi><mo>⁢</mo><mi>b</mi></mrow></mrow></mrow></math> where <math id="S3.SS1.p3.m2" class="ltx_Math" alttext="i=\sqrt{-1}" display="inline"><mrow><mi>i</mi><mo>=</mo><msqrt><mrow><mo>-</mo><mn>1</mn></mrow></msqrt></mrow></math>, <span class="ltx_text ltx_font_italic">c</span> is the convolution layer, and <span class="ltx_text ltx_font_italic">tc</span> is the transpose convolution layer.</p>
+</div>
+<figure id="S3.T1" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" colspan="2"><span class="ltx_text" style="font-size:80%;">Operation</span></th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text" style="font-size:80%;">Naive imp.</span></th>
+<th class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt"><span class="ltx_text" style="font-size:80%;">Complex equivalent</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_tt"><span class="ltx_text" style="font-size:80%;">Multiplication</span></td>
+<td class="ltx_td ltx_align_left ltx_border_tt"><span class="ltx_text" style="font-size:80%;">Inner product</span></td>
+<td class="ltx_td ltx_align_left ltx_border_tt"><math id="S3.T1.m2" class="ltx_Math" alttext="\sum_{i}w_{i}z_{i}" display="inline"><mrow><msub><mo largeop="true" mathsize="80%" stretchy="false" symmetric="true">∑</mo><mi mathsize="80%">i</mi></msub><mrow><msub><mi mathsize="80%">w</mi><mi mathsize="80%">i</mi></msub><mo>⁢</mo><msub><mi mathsize="80%">z</mi><mi mathsize="80%">i</mi></msub></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_border_tt"><span class="ltx_text" style="font-size:80%;">✓</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td"></td>
+<td class="ltx_td ltx_align_left"><span class="ltx_text" style="font-size:80%;">Convolution</span></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m3" class="ltx_Math" alttext="\operatorname{c}(a+ib)" display="inline"><mrow><mi mathsize="80%" mathvariant="normal">c</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mrow><mi mathsize="80%">a</mi><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mi mathsize="80%">b</mi></mrow></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m4" class="ltx_Math" alttext="\operatorname{c}_{r}(a)-\operatorname{c}_{i}(b)+i(\operatorname{c}_{i}(a)+%
+\operatorname{c}_{r}(b))" display="inline"><mrow><mrow><mrow><msub><mi mathsize="80%" mathvariant="normal">c</mi><mi mathsize="80%">r</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">a</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">-</mo><mrow><msub><mi mathsize="80%" mathvariant="normal">c</mi><mi mathsize="80%">i</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">b</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mrow><mrow><msub><mi mathsize="80%" mathvariant="normal">c</mi><mi mathsize="80%">i</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">a</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mrow><msub><mi mathsize="80%" mathvariant="normal">c</mi><mi mathsize="80%">r</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">b</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow></math></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td"></td>
+<td class="ltx_td ltx_align_left"><span class="ltx_text" style="font-size:80%;">Trans. conv.</span></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m5" class="ltx_Math" alttext="\operatorname{tc}(a+ib)" display="inline"><mrow><mi mathsize="80%">tc</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mrow><mi mathsize="80%">a</mi><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mi mathsize="80%">b</mi></mrow></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m6" class="ltx_Math" alttext="\operatorname{tc}_{r}(a)+\operatorname{tc}_{i}(b)+i(\operatorname{tc}_{i}(a)-%
+\operatorname{tc}_{r}(b))" display="inline"><mrow><mrow><msub><mi mathsize="80%">tc</mi><mi mathsize="80%">r</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">a</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mrow><msub><mi mathsize="80%">tc</mi><mi mathsize="80%">i</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">b</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mrow><mrow><msub><mi mathsize="80%">tc</mi><mi mathsize="80%">i</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">a</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">-</mo><mrow><msub><mi mathsize="80%">tc</mi><mi mathsize="80%">r</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">b</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow></math></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Activation</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Sigmoid</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><math id="S3.T1.m7" class="ltx_Math" alttext="\frac{1}{1+e^{-(a+ib)}}" display="inline"><mfrac><mn mathsize="80%">1</mn><mrow><mn mathsize="80%">1</mn><mo mathsize="80%" stretchy="false">+</mo><msup><mi mathsize="80%">e</mi><mrow><mo mathsize="80%" stretchy="false">-</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mrow><mi mathsize="80%">a</mi><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mi mathsize="80%">b</mi></mrow></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></msup></mrow></mfrac></math></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><math id="S3.T1.m8" class="ltx_Math" alttext="\operatorname{sigmoid}(a)+i\operatorname{sigmoid}(b)" display="inline"><mrow><mrow><mi mathsize="80%">sigmoid</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">a</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mrow><mi mathsize="80%">sigmoid</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">b</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow></mrow></math></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td"></td>
+<td class="ltx_td ltx_align_left"><span class="ltx_text" style="font-size:80%;">ReLU</span></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m9" class="ltx_Math" alttext="\max(0,a+ib)" display="inline"><mrow><mi mathsize="80%">max</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mn mathsize="80%">0</mn><mo mathsize="80%" stretchy="false">,</mo><mrow><mi mathsize="80%">a</mi><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mi mathsize="80%">b</mi></mrow></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left">
+<table class="ltx_tabular ltx_align_middle">
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m10" class="ltx_Math" alttext="\left\{\begin{array}[]{ll}(|z|+b)\frac{z}{|z|}&amp;\text{ if }|z|+b\geq 0\\
+0&amp;\text{ if }|z|+b&lt;0\\
+\end{array}\right." display="inline"><mrow><mo>{</mo><mtable columnspacing="5pt" rowspacing="0pt"><mtr><mtd columnalign="left"><mrow><mrow><mo maxsize="80%" minsize="80%">(</mo><mrow><mrow><mo maxsize="80%" minsize="80%">|</mo><mi mathsize="80%">z</mi><mo maxsize="80%" minsize="80%">|</mo></mrow><mo mathsize="80%" stretchy="false">+</mo><mi mathsize="80%">b</mi></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow><mo>⁢</mo><mfrac><mi mathsize="80%">z</mi><mrow><mo maxsize="80%" minsize="80%">|</mo><mi mathsize="80%">z</mi><mo maxsize="80%" minsize="80%">|</mo></mrow></mfrac></mrow></mtd><mtd columnalign="left"><mrow><mrow><mrow><mtext mathsize="80%"> if </mtext><mo>⁢</mo><mrow><mo maxsize="80%" minsize="80%">|</mo><mi mathsize="80%">z</mi><mo maxsize="80%" minsize="80%">|</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mi mathsize="80%">b</mi></mrow><mo mathsize="80%" stretchy="false">≥</mo><mn mathsize="80%">0</mn></mrow></mtd></mtr><mtr><mtd columnalign="left"><mn mathsize="80%">0</mn></mtd><mtd columnalign="left"><mrow><mrow><mrow><mtext mathsize="80%"> if </mtext><mo>⁢</mo><mrow><mo maxsize="80%" minsize="80%">|</mo><mi mathsize="80%">z</mi><mo maxsize="80%" minsize="80%">|</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mi mathsize="80%">b</mi></mrow><mo mathsize="80%" stretchy="false">&lt;</mo><mn mathsize="80%">0</mn></mrow></mtd></mtr></mtable><mi></mi></mrow></math></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td"></td>
+<td class="ltx_td ltx_align_left"><span class="ltx_text" style="font-size:80%;">Dropout</span></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m11" class="ltx_Math" alttext="\operatorname{DO}(a)+i\operatorname{DO}(b)\ \ " display="inline"><mrow><mrow><mrow><mi mathsize="80%">DO</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">a</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mrow><mi mathsize="80%">DO</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">b</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow></mrow><mo mathsize="80%" mathvariant="italic" separator="true" stretchy="false"> </mo></mrow></math></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m12" class="ltx_Math" alttext="\operatorname{DO}(a+ib)" display="inline"><mrow><mi mathsize="80%">DO</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mrow><mi mathsize="80%">a</mi><mo mathsize="80%" stretchy="false">+</mo><mrow><mi mathsize="80%">i</mi><mo>⁢</mo><mi mathsize="80%">b</mi></mrow></mrow><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></math></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Pooling</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Max</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><math id="S3.T1.m13" class="ltx_Math" alttext="\max_{i}z_{i}" display="inline"><mrow><msub><mi mathsize="80%">max</mi><mi mathsize="80%">i</mi></msub><mo>⁡</mo><msub><mi mathsize="80%">z</mi><mi mathsize="80%">i</mi></msub></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_border_t">
+<math id="S3.T1.m14" class="ltx_Math" alttext="z_{k}" display="inline"><msub><mi mathsize="80%">z</mi><mi mathsize="80%">k</mi></msub></math><span class="ltx_text" style="font-size:80%;"> where </span><math id="S3.T1.m15" class="ltx_Math" alttext="\operatorname{argmax}_{k}\{|z_{k}|\}" display="inline"><mrow><msub><mi mathsize="80%">argmax</mi><mi mathsize="80%">k</mi></msub><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">{</mo><mrow><mo maxsize="80%" minsize="80%">|</mo><msub><mi mathsize="80%">z</mi><mi mathsize="80%">k</mi></msub><mo maxsize="80%" minsize="80%">|</mo></mrow><mo maxsize="80%" minsize="80%">}</mo></mrow></mrow></math>
+</td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td"></td>
+<td class="ltx_td ltx_align_left"><span class="ltx_text" style="font-size:80%;">Average</span></td>
+<td class="ltx_td ltx_align_left"><math id="S3.T1.m16" class="ltx_Math" alttext="\frac{1}{N}\sum_{i}z_{i}" display="inline"><mrow><mfrac><mn mathsize="80%">1</mn><mi mathsize="80%">N</mi></mfrac><mo>⁢</mo><mrow><msub><mo largeop="true" mathsize="80%" stretchy="false" symmetric="true">∑</mo><mi mathsize="80%">i</mi></msub><msub><mi mathsize="80%">z</mi><mi mathsize="80%">i</mi></msub></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left"><span class="ltx_text" style="font-size:80%;">✓</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Normalisation</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Batch norm</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><math id="S3.T1.m18" class="ltx_Math" alttext="\mathbf{\hat{z}}=\frac{\mathbf{z}-\mathbb{E}[\mathbf{z}]}{\sqrt{\mathbb{V}[%
+\mathbf{z}]+\epsilon}}" display="inline"><mrow><mover accent="true"><mi mathsize="80%">𝐳</mi><mo mathsize="80%" stretchy="false">^</mo></mover><mo mathsize="80%" stretchy="false">=</mo><mfrac><mrow><mi mathsize="80%">𝐳</mi><mo mathsize="80%" stretchy="false">-</mo><mrow><mi mathsize="80%">𝔼</mi><mo>⁢</mo><mrow><mo maxsize="80%" minsize="80%">[</mo><mi mathsize="80%">𝐳</mi><mo maxsize="80%" minsize="80%">]</mo></mrow></mrow></mrow><msqrt><mrow><mrow><mi mathsize="80%">𝕍</mi><mo>⁢</mo><mrow><mo maxsize="80%" minsize="80%">[</mo><mi mathsize="80%">𝐳</mi><mo maxsize="80%" minsize="80%">]</mo></mrow></mrow><mo mathsize="80%" stretchy="false">+</mo><mi mathsize="80%">ϵ</mi></mrow></msqrt></mfrac></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">✓</span></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Loss</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><span class="ltx_text" style="font-size:80%;">Euclidean</span></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><math id="S3.T1.m19" class="ltx_Math" alttext="||Y-Z||^{2}_{2}" display="inline"><msubsup><mrow><mo fence="true">||</mo><mrow><mi mathsize="80%">Y</mi><mo mathsize="80%" stretchy="false">-</mo><mi mathsize="80%">Z</mi></mrow><mo fence="true">||</mo></mrow><mn mathsize="80%">2</mn><mn mathsize="80%">2</mn></msubsup></math></td>
+<td class="ltx_td ltx_align_left ltx_border_t"><math id="S3.T1.m20" class="ltx_Math" alttext="||\operatorname{abs}(Y)-\operatorname{abs}(Z)||_{2}^{2}" display="inline"><msubsup><mrow><mo fence="true">||</mo><mrow><mrow><mi mathsize="80%">abs</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">Y</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">-</mo><mrow><mi mathsize="80%">abs</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">Z</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow><mo fence="true">||</mo></mrow><mn mathsize="80%">2</mn><mn mathsize="80%">2</mn></msubsup></math></td>
+</tr>
+<tr class="ltx_tr">
+<td class="ltx_td ltx_border_bb"></td>
+<td class="ltx_td ltx_align_left ltx_border_bb"><span class="ltx_text" style="font-size:80%;">L1</span></td>
+<td class="ltx_td ltx_align_left ltx_border_bb"><math id="S3.T1.m21" class="ltx_Math" alttext="||Y-Z||_{1}" display="inline"><msub><mrow><mo fence="true">||</mo><mrow><mi mathsize="80%">Y</mi><mo mathsize="80%" stretchy="false">-</mo><mi mathsize="80%">Z</mi></mrow><mo fence="true">||</mo></mrow><mn mathsize="80%">1</mn></msub></math></td>
+<td class="ltx_td ltx_align_left ltx_border_bb"><math id="S3.T1.m22" class="ltx_Math" alttext="||\operatorname{abs}(Y)-\operatorname{abs}(Z)||_{1}" display="inline"><msub><mrow><mo fence="true">||</mo><mrow><mrow><mi mathsize="80%">abs</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">Y</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow><mo mathsize="80%" stretchy="false">-</mo><mrow><mi mathsize="80%">abs</mi><mo>⁡</mo><mrow><mo maxsize="80%" minsize="80%">(</mo><mi mathsize="80%">Z</mi><mo maxsize="80%" minsize="80%">)</mo></mrow></mrow></mrow><mo fence="true">||</mo></mrow><mn mathsize="80%">1</mn></msub></math></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 1: </span>Neural networks operators and their complex counterparts. Marked with a checkmark those operations that don’t need substantial modification to extend their usage to complex space.</figcaption>
+</figure>
+<div id="S3.SS1.p4" class="ltx_para">
+<p class="ltx_p">Once we have defined these basic operations we can then build a model that uses them and is therefore fit to process complex numbers. The advantage of this approach is that the model makes use of properties of complex numbers during the training instead of letting the network learn a relationship between the input channels like in the previous method.</p>
+</div>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Experimental setting</h3>
+
+<div id="S3.SS2.p1" class="ltx_para">
+<p class="ltx_p">In order to provide a better understanding on the effect of using a 3D or complex model, we compare all combinations of architectures obtained by modifying the following properties:</p>
+<ul id="S3.I1" class="ltx_itemize">
+<li id="S3.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i1.p1" class="ltx_para">
+<p class="ltx_p">2D vs 3D: whether the model uses 2D operations or 3D operations.</p>
+</div>
+</li>
+<li id="S3.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i2.p1" class="ltx_para">
+<p class="ltx_p">Magnitude vs complex data: whether we train the model with the absolute component alone or whether we use the full complex representation of the data. Notice that “complex data” is further split into 1. fully complex models that use complex operations and 2. models that keep standard operations, but use the phase data as a separate input channel. We refer to the former magnitude-only models as “Mag”, fully complex models as “Comp”, and magnitude-and-phase models as “MagPhs” for brevity.</p>
+</div>
+</li>
+<li id="S3.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I1.i3.p1" class="ltx_para">
+<p class="ltx_p">All slices vs individual slices: whether the model is trained to correct all SMS-acquired slices simultaneously or whether to correct a single slice at a time. When all the slices are used and the model is 3D, the slices are arranged in the third spatial dimension, while for 2D models the slices are treated as image channels.</p>
+</div>
+</li>
+</ul>
+<p class="ltx_p">This comparison results in 12 combinations of dimensionality (2 types), data (3 types), and input data (2 types). When a single model is referred to, we often use a shorthand: for instance, if we refer to a 2D fully-complex model trained on all the SMS slices, we will shorten it as “2D-All-Comp”.</p>
+</div>
+<div id="S3.SS2.p2" class="ltx_para">
+<p class="ltx_p">All the models were trained for 200 epochs with the Adam optimiser <cite class="ltx_cite ltx_citemacro_cite">[<a href="#bib.bib96" title="Adam: A Method for Stochastic Optimization" class="ltx_ref">9</a>]</cite>, a learning rate of 0.0003 that was then lowered by a factor of 10 after 100 epochs, a batch size of 16, mean absolute error loss, and residual learning. The data was padded and normalised in the range 0 to 1 and then randomly augmented with random rotation and random vertical and horizontal flipping. All the results were computed on the test set for the epoch in which the validation MAE was lowest.
+</p>
+</div>
+<div id="S3.SS2.p3" class="ltx_para">
+<p class="ltx_p">In order to ensure consistency, we kept the model size and architecture as fixed as possible by choosing a number of parameters, 3 millions, and a general architecture (U-Net with 5 layers with a doubling number of channels in each encoding layer) and subsequently adjusting the initial number of channels. The models have the following starting number of channels:</p>
+<ul id="S3.I2" class="ltx_itemize">
+<li id="S3.I2.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i1.p1" class="ltx_para">
+<p class="ltx_p">2D Mag and MagPhs: 28</p>
+</div>
+</li>
+<li id="S3.I2.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i2.p1" class="ltx_para">
+<p class="ltx_p">3D Mag and MagPhs: 16</p>
+</div>
+</li>
+<li id="S3.I2.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i3.p1" class="ltx_para">
+<p class="ltx_p">2D Complex: 20</p>
+</div>
+</li>
+<li id="S3.I2.i4" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I2.i4.p1" class="ltx_para">
+<p class="ltx_p">3D Complex: 11</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S3.SS2.p4" class="ltx_para">
+<p class="ltx_p">The data used for the training came from 31 ex-vivo swine hearts and was acquired with SMS factor equal to 2 and distance factor equal to 400%. Each heart was scanned in multiple locations to cover as much of the volume as possible. The ground truth images were obtained by scanning each heart again with the same protocol but no SMS acceleration. This results in around 43,000 2D complex slices for the training, 1200 slices for validation and 1200 slices for testing.</p>
+</div>
+</section>
+<section id="S3.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.3 </span>Results evaluation</h3>
+
+<div id="S3.SS3.p1" class="ltx_para">
+<p class="ltx_p">When working with DTI data, there are two main components we are interested in evaluating: the acquired images and the DTI maps derived from the images. The latter are particularly important as they are the main tools a clinician would use in a clinical setting. When evaluating the artefact-removal results of our models we therefore need to take both into account.</p>
+</div>
+<div id="S3.SS3.p2" class="ltx_para ltx_noindent">
+<p class="ltx_p">To evaluate the image quality we use mostly standard wide-spread metrics:</p>
+<ul id="S3.I3" class="ltx_itemize">
+<li id="S3.I3.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I3.i1.p1" class="ltx_para">
+<p class="ltx_p">Mean Absolute Error (MAE) ↓: <math id="S3.I3.i1.p1.m1" class="ltx_Math" alttext="\frac{1}{nm}\sum_{i=1}^{n}\sum_{j=1}^{m}\left|X^{(i,j)}-Y^{(i,j)}\right|" display="inline"><mrow><mfrac><mn>1</mn><mrow><mi>n</mi><mo>⁢</mo><mi>m</mi></mrow></mfrac><mo>⁢</mo><mrow><msubsup><mo largeop="true" symmetric="true">∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><mrow><msubsup><mo largeop="true" symmetric="true">∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>m</mi></msubsup><mrow><mo>|</mo><mrow><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup><mo>-</mo><msup><mi>Y</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup></mrow><mo>|</mo></mrow></mrow></mrow></mrow></math> where <math id="S3.I3.i1.p1.m2" class="ltx_Math" alttext="x" display="inline"><mi>x</mi></math> and <math id="S3.I3.i1.p1.m3" class="ltx_Math" alttext="y" display="inline"><mi>y</mi></math> are the predicted and target images respectively. For complex images the MAE is computed with respect to their magnitude and for MagPhs the phase information is not taken into account.</p>
+</div>
+</li>
+<li id="S3.I3.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I3.i2.p1" class="ltx_para">
+<p class="ltx_p">Peak Signal to Noise Ratio (PSNR) ↑: <math id="S3.I3.i2.p1.m1" class="ltx_Math" alttext="10\log_{10}\left(\frac{\operatorname{MAX}_{X}^{2}}{\operatorname{MSE}}\right)" display="inline"><mrow><mn>10</mn><mo>⁢</mo><mrow><msub><mi>log</mi><mn>10</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mfrac><msubsup><mi>MAX</mi><mi>X</mi><mn>2</mn></msubsup><mi>MSE</mi></mfrac><mo>)</mo></mrow></mrow></mrow></math> where <math id="S3.I3.i2.p1.m2" class="ltx_Math" alttext="\operatorname{MAX}_{X}" display="inline"><msub><mi>MAX</mi><mi>X</mi></msub></math> is maximum pixel intensity value across the image and <math id="S3.I3.i2.p1.m3" class="ltx_Math" alttext="\operatorname{MSE}" display="inline"><mi>MSE</mi></math> is the mean squared error between the predicted image and the target image. In the case of complex images we compute the PSNR on their magnitude and for the MagPhs case we discard the phase data.</p>
+</div>
+</li>
+<li id="S3.I3.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="S3.I3.i3.p1" class="ltx_para">
+<p class="ltx_p">Structural Similarity Index (SSIM) ↑: SSIM measures the perceived image degradation based on the loss of structure between the output and target images. It is computed as follows:</p>
+<table id="S3.E1" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.E1.m1" class="ltx_Math" alttext="\operatorname{SSIM}(X,Y)=\frac{\left(2\mu_{X}\mu_{X}+c_{1}\right)\left(2\sigma%
+_{XY}+c_{2}\right)}{\left(\mu_{X}^{2}+\mu_{Y}^{2}+c_{1}\right)\left(\sigma_{X}%
+^{2}+\sigma_{X}^{2}+c_{2}\right)}" display="block"><mrow><mrow><mi>SSIM</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mi>X</mi><mo>,</mo><mi>Y</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mfrac><mrow><mrow><mo>(</mo><mrow><mrow><mn>2</mn><mo>⁢</mo><msub><mi>μ</mi><mi>X</mi></msub><mo>⁢</mo><msub><mi>μ</mi><mi>X</mi></msub></mrow><mo>+</mo><msub><mi>c</mi><mn>1</mn></msub></mrow><mo>)</mo></mrow><mo>⁢</mo><mrow><mo>(</mo><mrow><mrow><mn>2</mn><mo>⁢</mo><msub><mi>σ</mi><mrow><mi>X</mi><mo>⁢</mo><mi>Y</mi></mrow></msub></mrow><mo>+</mo><msub><mi>c</mi><mn>2</mn></msub></mrow><mo>)</mo></mrow></mrow><mrow><mrow><mo>(</mo><mrow><msubsup><mi>μ</mi><mi>X</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>μ</mi><mi>Y</mi><mn>2</mn></msubsup><mo>+</mo><msub><mi>c</mi><mn>1</mn></msub></mrow><mo>)</mo></mrow><mo>⁢</mo><mrow><mo>(</mo><mrow><msubsup><mi>σ</mi><mi>X</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>σ</mi><mi>X</mi><mn>2</mn></msubsup><mo>+</mo><msub><mi>c</mi><mn>2</mn></msub></mrow><mo>)</mo></mrow></mrow></mfrac></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"><span class="ltx_tag ltx_tag_equation ltx_align_right">(1)</span></td>
+</tr>
+</table>
+<p class="ltx_p">Where <math id="S3.I3.i3.p1.m1" class="ltx_Math" alttext="\mu_{I}" display="inline"><msub><mi>μ</mi><mi>I</mi></msub></math> represents the mean over <math id="S3.I3.i3.p1.m2" class="ltx_Math" alttext="I" display="inline"><mi>I</mi></math>, <math id="S3.I3.i3.p1.m3" class="ltx_Math" alttext="\sigma_{I}" display="inline"><msub><mi>σ</mi><mi>I</mi></msub></math> the standard deviation over <math id="S3.I3.i3.p1.m4" class="ltx_Math" alttext="I" display="inline"><mi>I</mi></math>, <math id="S3.I3.i3.p1.m5" class="ltx_Math" alttext="\sigma_{IJ}" display="inline"><msub><mi>σ</mi><mrow><mi>I</mi><mo>⁢</mo><mi>J</mi></mrow></msub></math> the covariance, and <math id="S3.I3.i3.p1.m6" class="ltx_Math" alttext="c_{1}" display="inline"><msub><mi>c</mi><mn>1</mn></msub></math> and <math id="S3.I3.i3.p1.m7" class="ltx_Math" alttext="c_{2}" display="inline"><msub><mi>c</mi><mn>2</mn></msub></math> are fixed scalars used for numerical reasons.</p>
+</div>
+</li>
+</ul>
+</div>
+<div id="S3.SS3.p3" class="ltx_para">
+<p class="ltx_p">When analysing the DTI maps, we need to distinguish between scalar maps (MD and FA) and angular maps (HA and E2A). While for scalar maps we can use MAE (↓) as an error metric, angular maps are defined in the range <math id="S3.SS3.p3.m1" class="ltx_Math" alttext="[-90^{\circ},90^{\circ})" display="inline"><mrow><mo stretchy="false">[</mo><mrow><mo>-</mo><msup><mn>90</mn><mo>∘</mo></msup></mrow><mo>,</mo><msup><mn>90</mn><mo>∘</mo></msup><mo stretchy="false">)</mo></mrow></math> and they wrap around at the two extrema of this range. For these maps we use the Mean Angle Absolute Error (MAAE, ↓) defined below instead</p>
+<table id="S3.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.Ex1.m1" class="ltx_Math" alttext="\operatorname{MAAE}(X,Y)=\frac{1}{NM}\sum_{i=0}^{N}\sum_{j=0}^{M}\begin{cases}%
+\left|X^{(i,j)}-Y^{(i,j)}\right|,\ if\ \left|X^{(i,j)}-Y^{(i,j)}\right|&lt;90^{%
+\circ}\\
+180^{\circ}-\left|X^{(i,j)}-Y^{(i,j)}\right|,\ \text{otherwise}\end{cases}" display="block"><mrow><mrow><mi>MAAE</mi><mo>⁡</mo><mrow><mo stretchy="false">(</mo><mi>X</mi><mo>,</mo><mi>Y</mi><mo stretchy="false">)</mo></mrow></mrow><mo>=</mo><mrow><mfrac><mn>1</mn><mrow><mi>N</mi><mo>⁢</mo><mi>M</mi></mrow></mfrac><mo>⁢</mo><mrow><munderover><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mi>N</mi></munderover><mrow><munderover><mo largeop="true" movablelimits="false" symmetric="true">∑</mo><mrow><mi>j</mi><mo>=</mo><mn>0</mn></mrow><mi>M</mi></munderover><mrow><mo>{</mo><mtable columnspacing="5pt" displaystyle="true" rowspacing="0pt"><mtr><mtd columnalign="left"><mrow><mrow><mrow><mo>|</mo><mrow><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup><mo>-</mo><msup><mi>Y</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup></mrow><mo>|</mo></mrow><mo rspace="7.5pt">,</mo><mrow><mi>i</mi><mo>⁢</mo><mpadded width="+5pt"><mi>f</mi></mpadded><mo>⁢</mo><mrow><mo>|</mo><mrow><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup><mo>-</mo><msup><mi>Y</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup></mrow><mo>|</mo></mrow></mrow></mrow><mo>&lt;</mo><msup><mn>90</mn><mo>∘</mo></msup></mrow></mtd><mtd></mtd></mtr><mtr><mtd columnalign="left"><mrow><mrow><msup><mn>180</mn><mo>∘</mo></msup><mo>-</mo><mrow><mo>|</mo><mrow><msup><mi>X</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup><mo>-</mo><msup><mi>Y</mi><mrow><mo stretchy="false">(</mo><mi>i</mi><mo>,</mo><mi>j</mi><mo stretchy="false">)</mo></mrow></msup></mrow><mo>|</mo></mrow></mrow><mo rspace="7.5pt">,</mo><mtext>otherwise</mtext></mrow></mtd><mtd></mtd></mtr></mtable></mrow></mrow></mrow></mrow></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+</table>
+<p class="ltx_p">Moreover, as the DTI maps are not well-defined for the background voxels, we only consider the metrics computed on voxels belonging to the cardiac tissue.</p>
+</div>
+<div id="S3.SS3.p4" class="ltx_para">
+<p class="ltx_p">All the results are reported as the median over the means on a per-slice basis and its inter-quartile range as <span class="ltx_text ltx_font_italic">median [iqr]</span>. When we perform a statistical significance test we use the Wilcoxon rank test with <math id="S3.SS3.p4.m1" class="ltx_Math" alttext="P=0.05" display="inline"><mrow><mi>P</mi><mo>=</mo><mn>0.05</mn></mrow></math>.</p>
+</div>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Results</h2>
+
+<div id="S4.p1" class="ltx_para">
+<p class="ltx_p">In Tables <a href="#S4.T2" title="Table 2 ‣ 4 Results ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">2</span></span></a> and <a href="#S4.T3" title="Table 3 ‣ 4 Results ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">3</span></span></a> we report the performance metrics for the output images and for the DTI maps on the test set for all our models. The values of MD have been scaled by <math id="S4.p1.m1" class="ltx_Math" alttext="10^{5}" display="inline"><msup><mn>10</mn><mn>5</mn></msup></math> and the values of FA by <math id="S4.p1.m2" class="ltx_Math" alttext="10^{2}" display="inline"><msup><mn>10</mn><mn>2</mn></msup></math> to improve readability. In the table we mark in bold the best result across all models and we underline the second-best result. The values are also colour-coded from green (best result) to red (worst result) through yellow (median result) on a per-metric basis to better compare the models at first glance.</p>
+</div>
+<figure id="S4.T2" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_th ltx_th_row ltx_border_r ltx_border_tt"></th>
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="2"><span class="ltx_text" style="font-size:80%;">HA</span></td>
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="2"><span class="ltx_text" style="font-size:80%;">E2A</span></td>
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="2">
+<span class="ltx_text" style="font-size:80%;">MD (</span><math id="S4.T2.m1" class="ltx_Math" alttext="\times 10^{5}" display="inline"><mrow><mi></mi><mo mathsize="80%" stretchy="false">×</mo><msup><mn mathsize="80%">10</mn><mn mathsize="80%">5</mn></msup></mrow></math><span class="ltx_text" style="font-size:80%;">)</span>
+</td>
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="2">
+<span class="ltx_text" style="font-size:80%;">FA (</span><math id="S4.T2.m2" class="ltx_Math" alttext="\times 10^{2}" display="inline"><mrow><mi></mi><mo mathsize="80%" stretchy="false">×</mo><msup><mn mathsize="80%">10</mn><mn mathsize="80%">2</mn></msup></mrow></math><span class="ltx_text" style="font-size:80%;">)</span>
+</td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r" rowspan="-2"><span class="ltx_text" style="font-size:80%;">Run name</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">Median</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">IQR</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">Median</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">IQR</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">Median</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">IQR</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">Median</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">IQR</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">2D-ALL-ABS</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t" style="background-color:#E0E5B6;"><span class="ltx_text" style="font-size:80%;background-color:#E0E5B6;">16.9</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">5.0</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t" style="background-color:#E8E9BC;"><span class="ltx_text" style="font-size:80%;background-color:#E8E9BC;">26.1</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">4.8</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t" style="background-color:#F4EDC4;"><span class="ltx_text" style="font-size:80%;background-color:#F4EDC4;">5.44</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">1.51</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t" style="background-color:#FFCDB1;"><span class="ltx_text" style="font-size:80%;background-color:#FFCDB1;">5.95</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">1.19</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-ALL-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FFE8C5;"><span class="ltx_text" style="font-size:80%;background-color:#FFE8C5;">18.0</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.6</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#F2EDC3;"><span class="ltx_text" style="font-size:80%;background-color:#F2EDC3;">26.4</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.7</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FBF0C9;"><span class="ltx_text" style="font-size:80%;background-color:#FBF0C9;">5.50</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.97</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#A9D08E;"><span class="ltx_text" style="font-size:80%;background-color:#A9D08E;"><b>5.41</b></span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.33</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-ALL-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#DCE4B2;"><span class="ltx_text" style="font-size:80%;background-color:#DCE4B2;">16.7</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">2.6</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#A9D08E;"><span class="ltx_text" style="font-size:80%;background-color:#A9D08E;"><b>24.5</b></span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.4</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFEFCA;"><span class="ltx_text" style="font-size:80%;background-color:#FFEFCA;">5.55</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.03</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFEDC9;"><span class="ltx_text" style="font-size:80%;background-color:#FFEDC9;">5.86</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.40</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-ALL-ABS</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#E1E6B6;"><span class="ltx_text" style="font-size:80%;background-color:#E1E6B6;">16.9</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.3</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#F4EDC4;"><span class="ltx_text" style="font-size:80%;background-color:#F4EDC4;">26.4</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.5</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFAA98;"><span class="ltx_text" style="font-size:80%;background-color:#FFAA98;">5.98</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.26</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6565;"><span class="ltx_text" style="font-size:80%;background-color:#FF6565;">6.24</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.59</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-ALL-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6565;"><span class="ltx_text" style="font-size:80%;background-color:#FF6565;">19.4</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.8</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6E6B;"><span class="ltx_text" style="font-size:80%;background-color:#FF6E6B;">27.8</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.1</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF897F;"><span class="ltx_text" style="font-size:80%;background-color:#FF897F;">6.19</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.47</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFB09C;"><span class="ltx_text" style="font-size:80%;background-color:#FFB09C;">6.03</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.26</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-ALL-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#A9D08E;"><span class="ltx_text" style="font-size:80%;background-color:#A9D08E;"><b>15.0</b></span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.8</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#D1DFAA;">
+<span class="ltx_text" style="font-size:80%;background-color:#D1DFAA;"><u>25.5</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.8</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#B1D394;">
+<span class="ltx_text" style="font-size:80%;background-color:#B1D394;"><u>4.89</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.67</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#B2D395;">
+<span class="ltx_text" style="font-size:80%;background-color:#B2D395;"><u>5.46</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.35</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-Single-ABS</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#D3E0AC;">
+<span class="ltx_text" style="font-size:80%;background-color:#D3E0AC;"><u>16.4</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.2</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#D1DFAA;">
+<span class="ltx_text" style="font-size:80%;background-color:#D1DFAA;"><u>25.5</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.5</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#DEE5B4;"><span class="ltx_text" style="font-size:80%;background-color:#DEE5B4;">5.26</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.28</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FCF0C9;"><span class="ltx_text" style="font-size:80%;background-color:#FCF0C9;">5.83</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.51</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-Single-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FFAF9B;"><span class="ltx_text" style="font-size:80%;background-color:#FFAF9B;">18.6</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.7</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFAE9A;"><span class="ltx_text" style="font-size:80%;background-color:#FFAE9A;">27.3</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.0</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#D9E3B1;"><span class="ltx_text" style="font-size:80%;background-color:#D9E3B1;">5.22</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.95</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#D4E1AD;"><span class="ltx_text" style="font-size:80%;background-color:#D4E1AD;">5.63</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">2.25</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-Single-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FF9487;"><span class="ltx_text" style="font-size:80%;background-color:#FF9487;">18.9</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.8</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFB59F;"><span class="ltx_text" style="font-size:80%;background-color:#FFB59F;">27.2</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.7</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFD5B7;"><span class="ltx_text" style="font-size:80%;background-color:#FFD5B7;">5.71</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.17</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFD4B6;"><span class="ltx_text" style="font-size:80%;background-color:#FFD4B6;">5.93</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.37</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-Single-ABS</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FBF0C9;"><span class="ltx_text" style="font-size:80%;background-color:#FBF0C9;">17.8</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.1</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFD2B5;"><span class="ltx_text" style="font-size:80%;background-color:#FFD2B5;">27.0</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.4</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6565;"><span class="ltx_text" style="font-size:80%;background-color:#FF6565;">6.41</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.92</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#EEEBBF;"><span class="ltx_text" style="font-size:80%;background-color:#EEEBBF;">5.76</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.34</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-Single-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FF9487;"><span class="ltx_text" style="font-size:80%;background-color:#FF9487;">18.9</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.2</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFCBB0;"><span class="ltx_text" style="font-size:80%;background-color:#FFCBB0;">27.0</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.3</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#A9D08E;"><span class="ltx_text" style="font-size:80%;background-color:#A9D08E;"><b>4.82</b></span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.96</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#B6D597;"><span class="ltx_text" style="font-size:80%;background-color:#B6D597;">5.48</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.12</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-Single-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FFC8AD;"><span class="ltx_text" style="font-size:80%;background-color:#FFC8AD;">18.4</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.2</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6565;"><span class="ltx_text" style="font-size:80%;background-color:#FF6565;">27.9</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">6.0</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF7A75;"><span class="ltx_text" style="font-size:80%;background-color:#FF7A75;">6.28</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.88</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFE6C3;"><span class="ltx_text" style="font-size:80%;background-color:#FFE6C3;">5.88</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.72</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_tt" colspan="5"><span class="ltx_text" style="font-size:80%;"></span></th>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 2: </span>Numerical results related to the DTI maps computed from the AI-processed data. We report MAE for MD and FA and MAAE for HA and E2A. In bold and underlined, respectively, the best and second-best results for each metric.</figcaption>
+</figure>
+<figure id="S4.T3" class="ltx_table">
+<table class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr class="ltx_tr">
+<th class="ltx_td ltx_th ltx_th_row ltx_border_r ltx_border_tt"></th>
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="2">
+<span class="ltx_text" style="font-size:80%;">MAE (</span><math id="S4.T3.m1" class="ltx_Math" alttext="\times 10^{3}" display="inline"><mrow><mi></mi><mo mathsize="80%" stretchy="false">×</mo><msup><mn mathsize="80%">10</mn><mn mathsize="80%">3</mn></msup></mrow></math><span class="ltx_text" style="font-size:80%;">)</span>
+</td>
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="2"><span class="ltx_text" style="font-size:80%;">PSNR</span></td>
+<td class="ltx_td ltx_align_center ltx_border_tt" colspan="2"><span class="ltx_text" style="font-size:80%;">SSIM</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r" rowspan="-2"><span class="ltx_text" style="font-size:80%;">Run name</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">Median</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">IQR</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">Median</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">IQR</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">Median</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">IQR</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t"><span class="ltx_text" style="font-size:80%;">2D-ALL-ABS</span></th>
+<td class="ltx_td ltx_align_right ltx_border_t" style="background-color:#FFF2CC;"><span class="ltx_text" style="font-size:80%;background-color:#FFF2CC;">1.75</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">0.73</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t" style="background-color:#BED89D;">
+<span class="ltx_text" style="font-size:80%;background-color:#BED89D;"><u>37.2</u></span>
+</td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">3.56</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t" style="background-color:#FFF1CB;"><span class="ltx_text" style="font-size:80%;background-color:#FFF1CB;">0.917</span></td>
+<td class="ltx_td ltx_align_right ltx_border_t"><span class="ltx_text" style="font-size:80%;">0.021</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-ALL-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FFF1CB;"><span class="ltx_text" style="font-size:80%;background-color:#FFF1CB;">1.82</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.78</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFF1CB;"><span class="ltx_text" style="font-size:80%;background-color:#FFF1CB;">36.6</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.26</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFEEC9;"><span class="ltx_text" style="font-size:80%;background-color:#FFEEC9;">0.911</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.026</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-ALL-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FFF0CB;"><span class="ltx_text" style="font-size:80%;background-color:#FFF0CB;">1.84</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.78</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#A9D08E;"><span class="ltx_text" style="font-size:80%;background-color:#A9D08E;"><b>37.4</b></span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">2.85</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#DFE6B5;"><span class="ltx_text" style="font-size:80%;background-color:#DFE6B5;">0.921</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.020</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-ALL-ABS</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#F9EFC7;"><span class="ltx_text" style="font-size:80%;background-color:#F9EFC7;">1.74</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.62</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#DBE4B2;"><span class="ltx_text" style="font-size:80%;background-color:#DBE4B2;">37.0</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">2.80</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#EDEBBF;"><span class="ltx_text" style="font-size:80%;background-color:#EDEBBF;">0.920</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.018</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-ALL-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6565;"><span class="ltx_text" style="font-size:80%;background-color:#FF6565;">7.15</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.92</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF9E8F;"><span class="ltx_text" style="font-size:80%;background-color:#FF9E8F;">31.1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">1.41</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6565;"><span class="ltx_text" style="font-size:80%;background-color:#FF6565;">0.618</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.012</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-ALL-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#DAE3B1;"><span class="ltx_text" style="font-size:80%;background-color:#DAE3B1;">1.71</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.71</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFD8B9;"><span class="ltx_text" style="font-size:80%;background-color:#FFD8B9;">34.9</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.94</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#CCDEA8;"><span class="ltx_text" style="font-size:80%;background-color:#CCDEA8;">0.922</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.020</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-Single-ABS</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#BDD89C;"><span class="ltx_text" style="font-size:80%;background-color:#BDD89C;">1.68</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.76</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#C0D99F;"><span class="ltx_text" style="font-size:80%;background-color:#C0D99F;">37.2</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.52</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#BFD99E;">
+<span class="ltx_text" style="font-size:80%;background-color:#BFD99E;"><u>0.923</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.022</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-Single-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FFEBC7;"><span class="ltx_text" style="font-size:80%;background-color:#FFEBC7;">2.04</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.75</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFECC7;"><span class="ltx_text" style="font-size:80%;background-color:#FFECC7;">36.2</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.26</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFE5C3;"><span class="ltx_text" style="font-size:80%;background-color:#FFE5C3;">0.892</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.024</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">2D-Single-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#AED291;">
+<span class="ltx_text" style="font-size:80%;background-color:#AED291;"><u>1.67</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.75</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FDF2CB;"><span class="ltx_text" style="font-size:80%;background-color:#FDF2CB;">36.6</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.31</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#A9D08E;"><span class="ltx_text" style="font-size:80%;background-color:#A9D08E;"><b>0.925</b></span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.022</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-Single-ABS</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#A9D08E;"><span class="ltx_text" style="font-size:80%;background-color:#A9D08E;"><b>1.66</b></span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.72</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FF6565;"><span class="ltx_text" style="font-size:80%;background-color:#FF6565;">27.2</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">5.46</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFEDC8;"><span class="ltx_text" style="font-size:80%;background-color:#FFEDC8;">0.909</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.028</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-Single-Comp</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#FF978A;"><span class="ltx_text" style="font-size:80%;background-color:#FF978A;">5.24</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">4.19</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFEBC7;"><span class="ltx_text" style="font-size:80%;background-color:#FFEBC7;">36.2</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.37</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#FFE4C2;"><span class="ltx_text" style="font-size:80%;background-color:#FFE4C2;">0.889</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.020</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r"><span class="ltx_text" style="font-size:80%;">3D-Single-MagPhs</span></th>
+<td class="ltx_td ltx_align_right" style="background-color:#D3E0AC;"><span class="ltx_text" style="font-size:80%;background-color:#D3E0AC;">1.70</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.77</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#CCDEA7;"><span class="ltx_text" style="font-size:80%;background-color:#CCDEA7;">37.1</span></td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">3.83</span></td>
+<td class="ltx_td ltx_align_right" style="background-color:#C0D99F;">
+<span class="ltx_text" style="font-size:80%;background-color:#C0D99F;"><u>0.923</u></span>
+</td>
+<td class="ltx_td ltx_align_right"><span class="ltx_text" style="font-size:80%;">0.026</span></td>
+</tr>
+<tr class="ltx_tr">
+<th class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_tt" colspan="5"><span class="ltx_text" style="font-size:80%;"></span></th>
+<td class="ltx_td ltx_border_tt"></td>
+<td class="ltx_td ltx_border_tt"></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering" style="font-size:80%;"><span class="ltx_tag ltx_tag_table">Table 3: </span>Numerical results related to the artefact-removal output of our proposed AI models. The results here refer to the images produced by our model. In bold and underlined, respectively, the best and second-best results for each metric.</figcaption>
+</figure>
+<div id="S4.p2" class="ltx_para">
+<p class="ltx_p">We also visually report an example chosen from the test set in Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Results ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>.</p>
+</div>
+<figure id="S4.F1" class="ltx_figure"><img src="x1.png" id="S4.F1.g1" class="ltx_graphics ltx_centering" width="574" height="668" alt="Example DTI maps for an example from the test set.">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span>Example DTI maps for an example from the test set.</figcaption>
+</figure>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Discussion</h2>
+
+<div id="S5.p1" class="ltx_para">
+<p class="ltx_p">Analysing Tables <a href="#S4.T2" title="Table 2 ‣ 4 Results ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">2</span></span></a> and <a href="#S4.T3" title="Table 3 ‣ 4 Results ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag"><span class="ltx_text" style="font-size:80%;">3</span></span></a>, we can see how simpler 2D models that only use magnitude data seem to be extremely stable and easy to train, resulting in very good performance overall. Moreover, these models were also faster to train compared to 3D or complex models. 2D MagPhs models also performed remarkably well given how little the architectures differs from the 2D real-values model.</p>
+</div>
+<div id="S5.p2" class="ltx_para">
+<p class="ltx_p">Fully complex and 3D models are significantly slower to train on average due to the higher number of operations needed. Moreover, they are also associated with worse performance especially for the DTI maps results.</p>
+</div>
+<div id="S5.p3" class="ltx_para">
+<p class="ltx_p">There is an important point to be made about the worse performances of the more advanced models: as we aimed to keep the number of parameters fixed, we reduced the number of channels for each layer in the more advanced models, reducing the effective capacity of these models and therefore negatively affecting their performances. It can be hypothesised that these more advanced models would perform better given a higher number of fixed parameters and a longer training time.</p>
+</div>
+<div id="S5.p4" class="ltx_para">
+<p class="ltx_p">Moreover, as our dataset was acquired with SMS factor equal to 2, the 3D architectures have little additional spatial information to exploit when removing the artefacts from the slices. If the acceleration factor were higher, it is likely that better exploiting the 3D spatial information would produce better performances.</p>
+</div>
+<div id="S5.p5" class="ltx_para">
+<p class="ltx_p">Visually, from Figure <a href="#S4.F1" title="Figure 1 ‣ 4 Results ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">1</span></a>, we can notice how the AI-derived maps all show extremely similar flaws regardless of the model used (e.g. top-left quadrant of the HA maps), suggesting that 1. the information learned by the models is similar, and 2. almost none of the models is able to overcome the incorrect information present in the SMS version of the images used as input.</p>
+</div>
+</section>
+<section id="S6" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">6 </span>Conclusion</h2>
+
+<div id="S6.p1" class="ltx_para">
+<p class="ltx_p">As cardiac DTI becomes closer and closer to a clinical reality, deep learning is also becoming a vital tool in alleviating some of its downsides such as long scan times and low SNR. In the hurry associated with a new emerging field, many authors prioritise proof-of-concept work to showcase innovative ideas over exploring and comparing known and common options. In this work we lay out the basis of a comparison between input types and model dimensionality and we show how, despite our initial assumption, given a fixed number of parameters and a reasonable train time, 2D models vastly outperform their 3D counterparts and complex-valued networks are not preferable. On the other hand, the seemingly naive use of separate input channels for magnitude and phase data has beneficial performance over discarding the phase information as it is commonly done.</p>
+</div>
+<div id="S6.p2" class="ltx_para">
+<p class="ltx_p">As an advice for future studies, we suggest the use of 2D models and, if available, the of phase information together with the absolute information for their model-development starting point.</p>
+</div>
+<div class="ltx_pagination ltx_role_newpage"></div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib25" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[1]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Barth, F. Breuer, P. J. Koopmans, D. G. Norris, and B. A. Poser</span><span class="ltx_text ltx_bib_year"> (2016)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Simultaneous multislice (SMS) imaging techniques</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Magnetic Resonance in Medicine</span> <span class="ltx_text ltx_bib_volume">75</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 63–81</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1522-2594</span>,
+<a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.25897" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 Simultaneous multi-slice acquisition (SMS) ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib181" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[2]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">P. J. Basser</span><span class="ltx_text ltx_bib_year"> (1995)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Inferring microstructural features and the physiological state of tissues from diffusion-weighted images</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">NMR in Biomedicine</span> <span class="ltx_text ltx_bib_volume">8</span> (<span class="ltx_text ltx_bib_number">7</span>), <span class="ltx_text ltx_bib_pages"> pp. 333–344</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p2" title="2.1 Cardiac diffusion tensor imaging ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib123" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[3]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">D. L. Bihan, J. Mangin, C. Poupon, C. A. Clark, S. Pappata, N. Molko, and H. Chabriat</span><span class="ltx_text ltx_bib_year"> (2001)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Diffusion tensor imaging: Concepts and applications</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Magnetic Resonance Imaging</span> <span class="ltx_text ltx_bib_volume">13</span> (<span class="ltx_text ltx_bib_number">4</span>), <span class="ltx_text ltx_bib_pages"> pp. 534–546</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1522-2586</span>,
+<a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/jmri.1076" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p2" title="2.1 Cardiac diffusion tensor imaging ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib177" class="ltx_bibitem ltx_bib_report">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[4]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">Y. Cao, L. Wang, J. Huang, X. Cheng, J. Zhang, F. Yang, P. Zhang, J. Yang, and Y. Zhu</span><span class="ltx_text ltx_bib_year"> (2020-09)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">CS-GAN for High-Quality Diffusion Tensor Imaging</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_type">Technical report</span>
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">Guizhou University</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://www.researchsquare.com/article/rs-65572/v1" title="" class="ltx_ref ltx_bib_external">Link</a>,
+<a href="https://dx.doi.org/10.21203/rs.3.rs-65572/v1" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS3.p2" title="2.3 Deep learning in DTI ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>.
+</span>
+</li>
+<li id="bib.bib174" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[5]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">P. F. Ferreira, A. Banerjee, A. D. Scott, Z. Khalique, G. Yang, R. Rajakulasingam, M. Dwornik, R. De Silva, D. J. Pennell, D. N. Firmin, and S. Nielles-Vallespin</span><span class="ltx_text ltx_bib_year"> (2022)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Accelerating Cardiac Diffusion Tensor Imaging With a U-Net Based Model: Toward Single Breath-Hold</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Magnetic Resonance Imaging</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1522-2586</span>,
+<a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/jmri.28199" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS3.p1" title="2.3 Deep learning in DTI ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>.
+</span>
+</li>
+<li id="bib.bib166" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[6]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">P. F. Ferreira, R. R. Martin, A. D. Scott, Z. Khalique, G. Yang, S. Nielles-Vallespin, D. J. Pennell, and D. N. Firmin</span><span class="ltx_text ltx_bib_year"> (2020)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Automating in vivo cardiac diffusion tensor postprocessing with deep learning–based segmentation</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Magnetic Resonance in Medicine</span> <span class="ltx_text ltx_bib_volume">84</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 2801–2814</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1522-2594</span>,
+<a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.28294" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS3.p2" title="2.3 Deep learning in DTI ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>.
+</span>
+</li>
+<li id="bib.bib133" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[7]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. A. Griswold, P. M. Jakob, R. M. Heidemann, M. Nittka, V. Jellus, J. Wang, B. Kiefer, and A. Haase</span><span class="ltx_text ltx_bib_year"> (2002-06)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Generalized autocalibrating partially parallel acquisitions (GRAPPA)</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Magnetic Resonance in Medicine</span> <span class="ltx_text ltx_bib_volume">47</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 1202–1210</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0740-3194, 1522-2594</span>,
+<a href="http://doi.wiley.com/10.1002/mrm.10171" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 Simultaneous multi-slice acquisition (SMS) ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib175" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[8]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">D. Karimi and A. Gholipour</span><span class="ltx_text ltx_bib_year"> (2022-08)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Diffusion tensor estimation with transformer neural networks</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Artificial Intelligence in Medicine</span> <span class="ltx_text ltx_bib_volume">130</span>, <span class="ltx_text ltx_bib_pages"> pp. 102330</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0933-3657</span>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0933365722000951" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib96" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[9]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">D. P. Kingma and J. Ba</span><span class="ltx_text ltx_bib_year"> (2017-01)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Adam: A Method for Stochastic Optimization</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1412.6980 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1412.6980Comment: Published as a conference paper at the 3rd International Conference for Learning Representations, San Diego, 2015</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1412.6980" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S3.SS2.p2" title="3.2 Experimental setting ‣ 3 Methods ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.2</span></a>.
+</span>
+</li>
+<li id="bib.bib180" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[10]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">G. L. Kung, T. C. Nguyen, A. Itoh, S. Skare, N. B. Ingels Jr, D. C. Miller, and D. B. Ennis</span><span class="ltx_text ltx_bib_year"> (2011)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The presence of two local myocardial sheet populations confirmed by diffusion tensor mri and histological validation</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Magnetic Resonance Imaging</span> <span class="ltx_text ltx_bib_volume">34</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 1080–1091</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p2" title="2.1 Cardiac diffusion tensor imaging ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib131" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[11]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">S. Mori and J. Zhang</span><span class="ltx_text ltx_bib_year"> (2006-09)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Principles of Diffusion Tensor Imaging and Its Applications to Basic Neuroscience Research</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Neuron</span> <span class="ltx_text ltx_bib_volume">51</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 527–539</span> (<span class="ltx_text ltx_bib_language">English</span>).
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Publisher: Elsevier</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0896-6273</span>,
+<a href="https://www.cell.com/neuron/abstract/S0896-6273(06)00634-9" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib46" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[12]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">S. Nielles-Vallespin, Z. Khalique, P. F. Ferreira, R. de Silva, A. D. Scott, P. Kilner, L. McGill, A. Giannakidis, P. D. Gatehouse, D. Ennis, E. Aliotta, M. Al-Khalil, P. Kellman, D. Mazilu, R. S. Balaban, D. N. Firmin, A. E. Arai, and D. J. Pennell</span><span class="ltx_text ltx_bib_year"> (2017-02)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Assessment of Myocardial Microstructural Dynamics by In Vivo Diffusion Tensor Cardiac Magnetic Resonance</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of the American College of Cardiology</span> <span class="ltx_text ltx_bib_volume">69</span> (<span class="ltx_text ltx_bib_number">6</span>), <span class="ltx_text ltx_bib_pages"> pp. 661–676</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 07351097</span>,
+<a href="https://linkinghub.elsevier.com/retrieve/pii/S0735109716373272" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p2" title="2.1 Cardiac diffusion tensor imaging ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib33" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[13]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">S. Nielles‐Vallespin, A. Scott, P. Ferreira, Z. Khalique, D. Pennell, and D. Firmin</span><span class="ltx_text ltx_bib_year"> (2020-08)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Cardiac Diffusion: Technique and Practical Applications</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of Magnetic Resonance Imaging</span> <span class="ltx_text ltx_bib_volume">52</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 348–368</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 1053-1807, 1522-2586</span>,
+<a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/jmri.26912" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p2" title="2.1 Cardiac diffusion tensor imaging ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib52" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[14]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">K. Phipps, M. van de Boomen, R. Eder, S. A. Michelhaugh, A. Spahillari, J. Kim, S. Parajuli, T. G. Reese, C. Mekkaoui, S. Das, D. Gee, R. Shah, D. E. Sosnovik, and C. Nguyen</span><span class="ltx_text ltx_bib_year"> (2021-06)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Accelerated in Vivo Cardiac Diffusion-Tensor MRI Using Residual Deep Learning–based Denoising in Participants with Obesity</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Radiology: Cardiothoracic Imaging</span> <span class="ltx_text ltx_bib_volume">3</span> (<span class="ltx_text ltx_bib_number">3</span>), <span class="ltx_text ltx_bib_pages"> pp. e200580</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">Publisher: Radiological Society of North America</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://pubs.rsna.org/doi/abs/10.1148/ryct.2021200580" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS3.p1" title="2.3 Deep learning in DTI ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>.
+</span>
+</li>
+<li id="bib.bib132" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[15]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">K. P. Pruessmann, M. Weiger, M. B. Scheidegger, and P. Boesiger</span><span class="ltx_text ltx_bib_year"> (1999-11)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">SENSE: sensitivity encoding for fast MRI</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Magnetic Resonance in Medicine</span> <span class="ltx_text ltx_bib_volume">42</span> (<span class="ltx_text ltx_bib_number">5</span>), <span class="ltx_text ltx_bib_pages"> pp. 952–962</span> (<span class="ltx_text ltx_bib_language">eng</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0740-3194</span></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p2" title="2.2 Simultaneous multi-slice acquisition (SMS) ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[16]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">O. Ronneberger, P. Fischer, and T. Brox</span><span class="ltx_text ltx_bib_year"> (2015-05)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">U-Net: Convolutional Networks for Biomedical Image Segmentation</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1505.04597 [cs]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1505.04597Comment: conditionally accepted at MICCAI 2015</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1505.04597" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib130" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[17]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. D. Schlaudecker and C. R. Bernheisel</span><span class="ltx_text ltx_bib_year"> (2009-10)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Gadolinium-Associated Nephrogenic Systemic Fibrosis</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">American Family Physician</span> <span class="ltx_text ltx_bib_volume">80</span> (<span class="ltx_text ltx_bib_number">7</span>), <span class="ltx_text ltx_bib_pages"> pp. 711–714</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0002-838X, 1532-0650</span>,
+<a href="https://www.aafp.org/afp/2009/1001/p711.html" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib173" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[18]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Schlemper, G. Yang, P. Ferreira, A. Scott, L. McGill, Z. Khalique, M. Gorodezky, M. Roehl, J. Keegan, D. Pennell, D. Firmin, and D. Rueckert</span><span class="ltx_text ltx_bib_year"> (2018)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Stochastic Deep Compressive Sensing for the Reconstruction of Diffusion Tensor Cardiac MRI</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Medical Image Computing and Computer Assisted Intervention – MICCAI 2018</span>,  <span class="ltx_text ltx_bib_editor">A. F. Frangi, J. A. Schnabel, C. Davatzikos, C. Alberola-López, and G. Fichtinger (Eds.)</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_series">Lecture Notes in Computer Science</span>, <span class="ltx_text ltx_bib_place">Cham</span>, <span class="ltx_text ltx_bib_pages"> pp. 295–303</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text isbn ltx_bib_external">ISBN 978-3-030-00928-1</span>,
+<a href="https://dx.doi.org/10.1007/978-3-030-00928-1%5F34" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS3.p1" title="2.3 Deep learning in DTI ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>.
+</span>
+</li>
+<li id="bib.bib41" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[19]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">K. Setsompop, J. Cohen-Adad, B.A. Gagoski, T. Raij, A. Yendiki, B. Keil, V.J. Wedeen, and L.L. Wald</span><span class="ltx_text ltx_bib_year"> (2012-10)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Improving diffusion MRI using simultaneous multi-slice echo planar imaging</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">NeuroImage</span> <span class="ltx_text ltx_bib_volume">63</span> (<span class="ltx_text ltx_bib_number">1</span>), <span class="ltx_text ltx_bib_pages"> pp. 569–580</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 10538119</span>,
+<a href="https://linkinghub.elsevier.com/retrieve/pii/S1053811912006477" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p1" title="2.2 Simultaneous multi-slice acquisition (SMS) ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib183" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[20]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">M. Tänzer, P. Ferreira, A. Scott, Z. Khalique, M. Dwornik, D. Pennell, G. Yang, D. Rueckert, and S. Nielles-Vallespin</span><span class="ltx_text ltx_bib_year"> (2022)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Faster Diffusion Cardiac MRI with Deep Learning-Based Breath Hold Reduction</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">Medical Image Understanding and Analysis</span>,
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_series">Lecture Notes in Computer Science</span>, <span class="ltx_text ltx_bib_place">Cham</span>, <span class="ltx_text ltx_bib_pages"> pp. 101–115</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text isbn ltx_bib_external">ISBN 978-3-031-12053-4</span>,
+<a href="https://dx.doi.org/10.1007/978-3-031-12053-4%5F8" title="" class="ltx_ref doi ltx_bib_external">Document</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS3.p1" title="2.3 Deep learning in DTI ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>.
+</span>
+</li>
+<li id="bib.bib14" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[21]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">C. Tian, L. Fei, W. Zheng, Y. Xu, W. Zuo, and C. Lin</span><span class="ltx_text ltx_bib_year"> (2020-08)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Deep Learning on Image Denoising: An overview</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv:1912.13171 [cs, eess]</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note">arXiv: 1912.13171</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="http://arxiv.org/abs/1912.13171" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS3.p2" title="2.3 Deep learning in DTI ‣ 2 Background ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.3</span></a>.
+</span>
+</li>
+<li id="bib.bib176" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_key ltx_role_refnum ltx_tag_bibitem">[22]</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_author">J. Weine, R. J. H. van Gorkum, C. T. Stoeck, V. Vishnevskiy, and S. Kozerke</span><span class="ltx_text ltx_bib_year"> (2022-07)</span>
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Synthetically trained convolutional neural networks for improved tensor estimation from free-breathing cardiac DTI</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Computerized Medical Imaging and Graphics</span> <span class="ltx_text ltx_bib_volume">99</span>, <span class="ltx_text ltx_bib_pages"> pp. 102075</span> (<span class="ltx_text ltx_bib_language">en</span>).
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text issn ltx_bib_external">ISSN 0895-6111</span>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0895611122000489" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2" title="1 Introduction ‣ Review of data types and model dimensionality for cardiac DTI SMS-related artefact removalThis work was supported in part by the UKRI CDT in AI for Healthcare http://ai4health.io (Grant No. EP/S023283/1), the British Heart Foundation (RG/19/1/34160), and the UKRI Future Leaders Fellowship (MR/V023799/1)." class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+</ul>
+</section>
+</article>
+</div>
+<footer class="ltx_page_footer"></footer>
+</div>
+</body>
+</html>
