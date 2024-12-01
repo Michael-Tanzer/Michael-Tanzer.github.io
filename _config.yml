@@ -67,6 +67,38 @@ content:
       - layout: top-middle
         border: weak  # Value of `weak` will display a weak border below this item. # Any 
                       # other value (or no value) means no border will be displayed
+        title: The state-of-the-art in Cardiac MRI Reconstruction: Results of the CMRxRecon Challenge in MICCAI 2023
+        link: https://arxiv.org/abs/2404.01082
+        link_text: Conference proceedings
+        additional_links:
+          - title:  ArXiV
+            icon: fas fa-archive
+            url: https://arxiv.org/abs/2404.01082
+        quote: >
+          MICCAI 2023
+        description: | # this will include new lines to allow paragraphs
+          **Authors**: Jun Lyu et al. (<u>Michael Tänzer</u>, co-author)
+
+          **Abstract**: Cardiac MRI, crucial for evaluating heart structure and function, faces limitations like slow imaging and motion artifacts. Undersampling reconstruction, especially data-driven algorithms, has emerged as a promising solution to accelerate scans and enhance imaging performance using highly under-sampled data. Nevertheless, the scarcity of publicly available cardiac k-space datasets and evaluation platform hinder the development of data-driven reconstruction algorithms. To address this issue, we organized the Cardiac MRI Reconstruction Challenge (CMRxRecon) in 2023, in collaboration with the 26th International Conference on MICCAI. CMRxRecon presented an extensive k-space dataset comprising cine and mapping raw data, accompanied by detailed annotations of cardiac anatomical structures. With overwhelming participation, the challenge attracted more than 285 teams and over 600 participants. Among them, 22 teams successfully submitted Docker containers for the testing phase, with 7 teams submitted for both cine and mapping tasks. All teams use deep learning based approaches, indicating that deep learning has predominately become a promising solution for the problem. The first-place winner of both tasks utilizes the E2E-VarNet architecture as backbones. In contrast, U-Net is still the most popular backbone for both multi-coil and single-coil reconstructions. This paper provides a comprehensive overview of the challenge design, presents a summary of the submitted results, reviews the employed methods, and offers an in-depth discussion that aims to inspire future advancements in cardiac MRI reconstruction models. The summary emphasizes the effective strategies observed in Cardiac MRI reconstruction, including backbone architecture, loss function, pre-processing techniques, physical modeling, and model complexity, thereby providing valuable insights for further developments in this field.
+      - layout: top-middle
+        border: weak  # Value of `weak` will display a weak border below this item. # Any 
+                      # other value (or no value) means no border will be displayed
+        title: T1/T2 Relaxation Temporal Modelling from Accelerated Acquisitions Using a Latent Transformer
+        link: https://link.springer.com/chapter/10.1007/978-3-031-52448-6_28
+        link_text: Conference proceedings
+        additional_links:
+          - title:  ArXiV
+            icon: fas fa-archive
+            url: https://arxiv.org/abs/2309.16853
+        quote: >
+          MICCAI 2023
+        description: | # this will include new lines to allow paragraphs
+          **Authors**: <u>Michael Tänzer</u>, Fanwen Wang, Mengyun Qiao, Wenjia Bai, Daniel Rueckert, Guang Yang, Sonia Nielles-Vallespin
+
+          **Abstract**: Quantitative cardiac magnetic resonance T1 and T2 mapping enable myocardial tissue characterisation but the lengthy scan times restrict their widespread clinical application. We propose a deep learning method that incorporates a time dependency Latent Transformer module to model relationships between parameterised time frames for improved reconstruction from undersampled data. The module, implemented as a multi-resolution sequence-to-sequence transformer, is integrated into an encoder-decoder architecture to leverage the inherent temporal correlations in relaxation processes. The presented results for accelerated T1 and T2 mapping show the model recovers maps with higher fidelity by explicit incorporation of time dynamics. This work demonstrates the importance of temporal modelling for artifact-free reconstruction in quantitative MRI.
+      - layout: top-middle
+        border: weak  # Value of `weak` will display a weak border below this item. # Any 
+                      # other value (or no value) means no border will be displayed
         title: Faster Diffusion Cardiac MRI with Deep Learning-based breath hold reduction
         link: https://link.springer.com/chapter/10.1007/978-3-031-12053-4_8
         link_text: Conference proceedings
@@ -91,7 +123,7 @@ content:
             icon: fas fa-archive
             url: https://arxiv.org/abs/2209.09522
         quote: >
-          MICCAI STACOM 2022
+          MICCAI 2022
         description: | # this will include new lines to allow paragraphs
           **Authors**: <u>Michael Tänzer</u>, Sea Hee Yook, Guang Yang, Daniel Rueckert, Sonia Nielles-Vallespin
 
